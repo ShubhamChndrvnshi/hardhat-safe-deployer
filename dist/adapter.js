@@ -21,26 +21,31 @@ class SafeProviderAdapter {
         this.safeContract = new ethers_1.Contract(safe, this.safeInterface, this.signer);
     }
     async estimateSafeTx(safe, safeTx) {
+        console.log("DEBUG: GNOSIS SAFE DEPLOYER estimateSafeTx", { safe, safeTx });
         const url = `${this.serviceUrl}/api/v1/safes/${safe}/multisig-transactions/estimations/`;
         const resp = await axios_1.default.post(url, safeTx);
         return resp.data;
     }
     async getSafeTxDetails(safeTxHash) {
+        console.log("DEBUG: GNOSIS SAFE DEPLOYER getSafeTxDetails", safeTxHash);
         const url = `${this.serviceUrl}/api/v1/multisig-transactions/${safeTxHash}`;
         const resp = await axios_1.default.get(url);
         return resp.data;
     }
     async proposeTx(safeTxHash, safeTx, signature) {
+        console.log("DEBUG: GNOSIS SAFE DEPLOYER proposeTx", { safeTxHash, safeTx, signature });
         const url = `${this.serviceUrl}/api/v1/safes/${this.safe}/multisig-transactions/`;
         const data = Object.assign(Object.assign({}, safeTx), { contractTransactionHash: safeTxHash, sender: signature.signer, signature: signature.data });
         const resp = await axios_1.default.post(url, data);
         return resp.data;
     }
     sendAsync(payload, callback) {
+        console.log("DEBUG: GNOSIS SAFE DEPLOYER sendAsync", payload);
         return this.wrapped.sendAsync(payload, callback);
     }
     async request(args) {
         var _a;
+        console.log("DEBUG: GNOSIS SAFE DEPLOYER request", args);
         if (args.method === 'eth_sendTransaction' && args.params && ((_a = args.params[0].from) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === this.safe.toLowerCase()) {
             const tx = args.params[0];
             let operation = 0;
@@ -160,6 +165,7 @@ class SafeProviderAdapter {
         return this.wrapped.eventNames();
     }
     async send(method, params) {
+        console.log("DEBUG: GNOSIS SAFE DEPLOYER send");
         return await this.request({ method, params });
     }
 }

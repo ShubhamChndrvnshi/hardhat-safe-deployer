@@ -25,18 +25,21 @@ export class SafeProviderAdapter implements EthereumProvider {
     }
 
     async estimateSafeTx(safe: string, safeTx: SafeTransaction): Promise<any> {
+        console.log("DEBUG: GNOSIS SAFE DEPLOYER estimateSafeTx",{ safe, safeTx })
         const url = `${this.serviceUrl}/api/v1/safes/${safe}/multisig-transactions/estimations/`
         const resp = await axios.post(url, safeTx)
         return resp.data
     }
 
     async getSafeTxDetails(safeTxHash: string): Promise<any> {
+        console.log("DEBUG: GNOSIS SAFE DEPLOYER getSafeTxDetails", safeTxHash)
         const url = `${this.serviceUrl}/api/v1/multisig-transactions/${safeTxHash}`
         const resp = await axios.get(url)
         return resp.data
     }
 
     async proposeTx(safeTxHash: string, safeTx: SafeTransaction, signature: SafeSignature): Promise<String> {
+        console.log("DEBUG: GNOSIS SAFE DEPLOYER proposeTx",{ safeTxHash, safeTx, signature })
         const url = `${this.serviceUrl}/api/v1/safes/${this.safe}/multisig-transactions/`
         const data = {
             ...safeTx,
@@ -49,10 +52,12 @@ export class SafeProviderAdapter implements EthereumProvider {
     }
 
     sendAsync(payload: JsonRpcRequest, callback: (error: any, response: JsonRpcResponse) => void): void {
+        console.log("DEBUG: GNOSIS SAFE DEPLOYER sendAsync", payload)
         return this.wrapped.sendAsync(payload, callback)
     }
 
     async request(args: RequestArguments): Promise<unknown> {
+        console.log("DEBUG: GNOSIS SAFE DEPLOYER request", args)
         if (args.method === 'eth_sendTransaction' && args.params && (args.params as any)[0].from?.toLowerCase() === this.safe.toLowerCase()) {
             const tx = (args.params as any)[0]
             let operation = 0
@@ -168,6 +173,7 @@ export class SafeProviderAdapter implements EthereumProvider {
         return this.wrapped.eventNames()
     }
     async send(method: string, params: any): Promise<any> {
+        console.log("DEBUG: GNOSIS SAFE DEPLOYER send")
         return await this.request({ method, params })
     }
 }
