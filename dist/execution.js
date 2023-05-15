@@ -25,7 +25,7 @@ const signHash = async (signer, hash, from) => {
         console.log("DEBUG: GNOSIS SAFE DEPLOYER signHash1");
         const signature = await signer.request({
             method: 'personal_sign',
-            params: [typedDataHash, from],
+            params: [hash, from],
         });
         console.log(" DEBUG: GNOSIS SAFE DEPLOYER signature", signature);
         return {
