@@ -49,6 +49,7 @@ export const signHash = async (signer: Wallet | Signer | EthereumProvider, hash:
             method: 'personal_sign',
             params: [typedDataHash, from],
           })
+          console.log(" DEBUG: GNOSIS SAFE DEPLOYER signature", signature)
         return {
             signer: from || "",
             data: String(signature).replace(/1b$/, "1f").replace(/1c$/, "20")
