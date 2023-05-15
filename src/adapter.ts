@@ -1,6 +1,6 @@
 import { EthereumProvider, JsonRpcRequest, JsonRpcResponse, RequestArguments } from "hardhat/types";
 import { buildSafeTransaction, EIP712_SAFE_TX_TYPE, SafeSignature, SafeTransaction, signHash } from "./execution"
-import { Wallet, Contract, Signer, utils } from "ethers";
+import { Wallet, Contract, Signer, utils, providers } from "ethers";
 import axios from "axios"
 
 export class SafeProviderAdapter implements EthereumProvider {
@@ -11,21 +11,24 @@ export class SafeProviderAdapter implements EthereumProvider {
     safeContract: Contract
     safe: string
     serviceUrl: string
-    signer: Wallet| Signer
+    signer: Wallet | EthereumProvider
     submittedTxs = new Map<string, any>()
     wrapped: any
+    accounts: string[]
 
-    constructor(wrapped: any, signer: Wallet| Signer, safe: string, chainId: number, serviceUrl?: string) {
+    constructor(wrapped: any, signer: Wallet | EthereumProvider, safe: string, chainId: number, infuraApiKey: string, serviceUrl?: string) {
         this.chainId = chainId;
         this.wrapped = wrapped
         this.signer = signer
+        this.accounts = []
         this.safe = utils.getAddress(safe)
         this.serviceUrl = serviceUrl ?? "https://safe-transaction.rinkeby.gnosis.io"
-        this.safeContract = new Contract(safe, this.safeInterface, this.signer)
+        const rpcUrls = this.getRpcUrls(infuraApiKey);
+        this.safeContract = new Contract(safe, this.safeInterface, new providers.JsonRpcProvider(rpcUrls[this.chainId]))
     }
 
     async estimateSafeTx(safe: string, safeTx: SafeTransaction): Promise<any> {
-        console.log("DEBUG: GNOSIS SAFE DEPLOYER estimateSafeTx",{ safe, safeTx })
+        console.log("DEBUG: GNOSIS SAFE DEPLOYER estimateSafeTx", { safe, safeTx })
         const url = `${this.serviceUrl}/api/v1/safes/${safe}/multisig-transactions/estimations/`
         const resp = await axios.post(url, safeTx)
         return resp.data
@@ -39,7 +42,7 @@ export class SafeProviderAdapter implements EthereumProvider {
     }
 
     async proposeTx(safeTxHash: string, safeTx: SafeTransaction, signature: SafeSignature): Promise<String> {
-        console.log("DEBUG: GNOSIS SAFE DEPLOYER proposeTx",{ safeTxHash, safeTx, signature })
+        console.log("DEBUG: GNOSIS SAFE DEPLOYER proposeTx", { safeTxHash, safeTx, signature })
         const url = `${this.serviceUrl}/api/v1/safes/${this.safe}/multisig-transactions/`
         const data = {
             ...safeTx,
@@ -58,6 +61,9 @@ export class SafeProviderAdapter implements EthereumProvider {
 
     async request(args: RequestArguments): Promise<unknown> {
         console.log("DEBUG: GNOSIS SAFE DEPLOYER request", args)
+        if (!this.accounts.length) this.wrapped.sendAsync({ method: "eth_accounts", params: [] }, (_err: any, resp: string[]) => {
+            this.accounts = resp;
+        })
         if (args.method === 'eth_sendTransaction' && args.params && (args.params as any)[0].from?.toLowerCase() === this.safe.toLowerCase()) {
             const tx = (args.params as any)[0]
             let operation = 0
@@ -175,5 +181,17 @@ export class SafeProviderAdapter implements EthereumProvider {
     async send(method: string, params: any): Promise<any> {
         console.log("DEBUG: GNOSIS SAFE DEPLOYER send")
         return await this.request({ method, params })
+    }
+
+    private getRpcUrls(apiKey: string): { [network: string]: string } {
+        const networks = {
+            1: `https://mainnet.infura.io/v3/${apiKey}`,
+            3: `https://ropsten.infura.io/v3/${apiKey}`,
+            4: `https://rinkeby.infura.io/v3/${apiKey}`,
+            42: `https://kovan.infura.io/v3/${apiKey}`,
+            5: `https://goerli.infura.io/v3/${apiKey}`,
+        };
+
+        return networks;
     }
 }

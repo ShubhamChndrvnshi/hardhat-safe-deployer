@@ -1,22 +1,24 @@
 import "@nomiclabs/hardhat-ethers";
 import { Signer, Wallet } from "ethers"
 import { extendEnvironment } from "hardhat/config"
+import { EthereumProvider } from "hardhat/types";
 import { SafeProviderAdapter } from "./adapter"
 
-export const setupSafeDeployer = (payload: { signer: Wallet | Signer , safe: string, serivceUrl: string | undefined }) => {
+export const setupSafeDeployer = (payload: { signer: Wallet | EthereumProvider, safe: string, serivceUrl: string | undefined, infuraApiKey: string }) => {
   extendEnvironment((env) => {
-    const { safe, serivceUrl } = payload
+    const { infuraApiKey, safe, serivceUrl } = payload
     const { chainId } = env.network.config;
     if (!chainId) {
       throw new Error('The chainId was required in hardhat network config');
     }
-    // if(!payload.signer) payload.signer = env.ethers.provider.getSigner(0)
-    // else payload.signer =  payload.signer.connect(env.network.provider)
+    if(payload.signer instanceof Wallet) payload.signer = payload.signer.connect(env.ethers.provider)
+
     env.network.provider = new SafeProviderAdapter(
       env.network.provider,
-      payload.signer.connect(env.ethers.provider),
+      payload.signer,
       safe,
       chainId,
+      infuraApiKey,
       serivceUrl
     )
   })

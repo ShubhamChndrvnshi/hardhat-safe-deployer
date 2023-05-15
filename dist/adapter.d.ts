@@ -1,6 +1,6 @@
 import { EthereumProvider, JsonRpcRequest, JsonRpcResponse, RequestArguments } from "hardhat/types";
 import { SafeSignature, SafeTransaction } from "./execution";
-import { Wallet, Contract, Signer, utils } from "ethers";
+import { Wallet, Contract, utils } from "ethers";
 export declare class SafeProviderAdapter implements EthereumProvider {
     chainId: number;
     createLibAddress: string;
@@ -9,10 +9,11 @@ export declare class SafeProviderAdapter implements EthereumProvider {
     safeContract: Contract;
     safe: string;
     serviceUrl: string;
-    signer: Wallet | Signer;
+    signer: Wallet | EthereumProvider;
     submittedTxs: Map<string, any>;
     wrapped: any;
-    constructor(wrapped: any, signer: Wallet | Signer, safe: string, chainId: number, serviceUrl?: string);
+    accounts: string[];
+    constructor(wrapped: any, signer: Wallet | EthereumProvider, safe: string, chainId: number, infuraApiKey: string, serviceUrl?: string);
     estimateSafeTx(safe: string, safeTx: SafeTransaction): Promise<any>;
     getSafeTxDetails(safeTxHash: string): Promise<any>;
     proposeTx(safeTxHash: string, safeTx: SafeTransaction, signature: SafeSignature): Promise<String>;
@@ -34,5 +35,6 @@ export declare class SafeProviderAdapter implements EthereumProvider {
     prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): this;
     eventNames(): (string | symbol)[];
     send(method: string, params: any): Promise<any>;
+    private getRpcUrls;
 }
 //# sourceMappingURL=adapter.d.ts.map

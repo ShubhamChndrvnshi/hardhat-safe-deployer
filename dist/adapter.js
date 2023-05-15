@@ -8,7 +8,7 @@ const execution_1 = require("./execution");
 const ethers_1 = require("ethers");
 const axios_1 = __importDefault(require("axios"));
 class SafeProviderAdapter {
-    constructor(wrapped, signer, safe, chainId, serviceUrl) {
+    constructor(wrapped, signer, safe, chainId, infuraApiKey, serviceUrl) {
         this.createLibAddress = "0x7cbB62EaA69F79e6873cD1ecB2392971036cFAa4";
         this.createLibInterface = new ethers_1.utils.Interface(["function performCreate(uint256,bytes)"]);
         this.safeInterface = new ethers_1.utils.Interface(["function nonce() view returns(uint256)"]);
@@ -16,9 +16,11 @@ class SafeProviderAdapter {
         this.chainId = chainId;
         this.wrapped = wrapped;
         this.signer = signer;
+        this.accounts = [];
         this.safe = ethers_1.utils.getAddress(safe);
         this.serviceUrl = serviceUrl !== null && serviceUrl !== void 0 ? serviceUrl : "https://safe-transaction.rinkeby.gnosis.io";
-        this.safeContract = new ethers_1.Contract(safe, this.safeInterface, this.signer);
+        const rpcUrls = this.getRpcUrls(infuraApiKey);
+        this.safeContract = new ethers_1.Contract(safe, this.safeInterface, new ethers_1.providers.JsonRpcProvider(rpcUrls[this.chainId]));
     }
     async estimateSafeTx(safe, safeTx) {
         console.log("DEBUG: GNOSIS SAFE DEPLOYER estimateSafeTx", { safe, safeTx });
@@ -46,6 +48,10 @@ class SafeProviderAdapter {
     async request(args) {
         var _a;
         console.log("DEBUG: GNOSIS SAFE DEPLOYER request", args);
+        if (!this.accounts.length)
+            this.wrapped.sendAsync({ method: "eth_accounts", params: [] }, (_err, resp) => {
+                this.accounts = resp;
+            });
         if (args.method === 'eth_sendTransaction' && args.params && ((_a = args.params[0].from) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === this.safe.toLowerCase()) {
             const tx = args.params[0];
             let operation = 0;
@@ -167,6 +173,16 @@ class SafeProviderAdapter {
     async send(method, params) {
         console.log("DEBUG: GNOSIS SAFE DEPLOYER send");
         return await this.request({ method, params });
+    }
+    getRpcUrls(apiKey) {
+        const networks = {
+            1: `https://mainnet.infura.io/v3/${apiKey}`,
+            3: `https://ropsten.infura.io/v3/${apiKey}`,
+            4: `https://rinkeby.infura.io/v3/${apiKey}`,
+            42: `https://kovan.infura.io/v3/${apiKey}`,
+            5: `https://goerli.infura.io/v3/${apiKey}`,
+        };
+        return networks;
     }
 }
 exports.SafeProviderAdapter = SafeProviderAdapter;

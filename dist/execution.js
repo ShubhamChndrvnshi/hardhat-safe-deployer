@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildSafeTransaction = exports.signHash = exports.EIP712_SAFE_TX_TYPE = void 0;
+const ethers_1 = require("ethers");
 const bytes_1 = require("@ethersproject/bytes");
 const constants_1 = require("@ethersproject/constants");
 exports.EIP712_SAFE_TX_TYPE = {
@@ -18,8 +19,25 @@ exports.EIP712_SAFE_TX_TYPE = {
         { type: "uint256", name: "nonce" },
     ]
 };
-const signHash = async (signer, hash) => {
+const signHash = async (signer, hash, from) => {
     const typedDataHash = (0, bytes_1.arrayify)(hash);
+    if (!(signer instanceof ethers_1.Wallet || signer instanceof ethers_1.Signer)) {
+        let signature = '';
+        signer.sendAsync({
+            method: 'personal_sign',
+            params: [typedDataHash, from],
+            jsonrpc: "",
+            id: 0
+        }, (err, signature) => {
+            if (err)
+                throw err;
+            signature = signature;
+        });
+        return {
+            signer: from || "",
+            data: signature.replace(/1b$/, "1f").replace(/1c$/, "20")
+        };
+    }
     return {
         signer: await signer.getAddress(),
         data: (await signer.signMessage(typedDataHash)).replace(/1b$/, "1f").replace(/1c$/, "20")

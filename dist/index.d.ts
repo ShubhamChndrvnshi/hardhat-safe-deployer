@@ -1,8 +1,10 @@
 import "@nomiclabs/hardhat-ethers";
-import { Signer, Wallet } from "ethers";
+import { Wallet } from "ethers";
+import { EthereumProvider } from "hardhat/types";
 export declare const setupSafeDeployer: (payload: {
-    signer: Wallet | Signer;
+    signer: Wallet | EthereumProvider;
     safe: string;
     serivceUrl: string | undefined;
+    infuraApiKey: string;
 }) => void;
 //# sourceMappingURL=index.d.ts.map
