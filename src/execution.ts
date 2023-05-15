@@ -48,10 +48,10 @@ export const signHash = async (signer: Wallet | Signer | EthereumProvider, hash:
         const signature = await signer.request({
             method: 'personal_sign',
             params: [typedDataHash, from],
-          }) as string
+          })
         return {
             signer: from || "",
-            data: signature.replace(/1b$/, "1f").replace(/1c$/, "20")
+            data: String(signature).replace(/1b$/, "1f").replace(/1c$/, "20")
         }
     }
     console.log("DEBUG: GNOSIS SAFE DEPLOYER signHash2")
