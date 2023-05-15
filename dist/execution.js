@@ -23,16 +23,9 @@ const signHash = async (signer, hash, from) => {
     const typedDataHash = (0, bytes_1.arrayify)(hash);
     if (!(signer instanceof ethers_1.Wallet || signer instanceof ethers_1.Signer)) {
         console.log("DEBUG: GNOSIS SAFE DEPLOYER signHash1");
-        let signature = '';
-        signer.sendAsync({
+        const signature = await signer.request({
             method: 'personal_sign',
             params: [typedDataHash, from],
-            jsonrpc: "",
-            id: 0
-        }, (err, signature) => {
-            if (err)
-                throw err;
-            signature = signature;
         });
         return {
             signer: from || "",

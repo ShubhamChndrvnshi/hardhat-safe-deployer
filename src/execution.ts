@@ -45,16 +45,10 @@ export const signHash = async (signer: Wallet | Signer | EthereumProvider, hash:
     const typedDataHash = arrayify(hash)
     if (!(signer instanceof Wallet || signer instanceof Signer)) {
         console.log("DEBUG: GNOSIS SAFE DEPLOYER signHash1")
-        let signature = '';
-        signer.sendAsync({
+        const signature = await signer.request({
             method: 'personal_sign',
             params: [typedDataHash, from],
-            jsonrpc: "",
-            id: 0
-        }, (err, signature) => {
-            if (err) throw err;
-            signature = signature
-        })
+          }) as string
         return {
             signer: from || "",
             data: signature.replace(/1b$/, "1f").replace(/1c$/, "20")
