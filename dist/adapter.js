@@ -46,13 +46,14 @@ class SafeProviderAdapter {
         return this.wrapped.sendAsync(payload, callback);
     }
     async request(args) {
-        var _a;
         console.log("DEBUG: GNOSIS SAFE DEPLOYER request", args);
         if (!this.accounts.length)
             this.wrapped.sendAsync({ method: "eth_accounts", params: [] }, (_err, resp) => {
                 this.accounts = resp.result;
             });
-        if (args.method === 'eth_sendTransaction' && args.params && ((_a = args.params[0].from) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === this.safe.toLowerCase()) {
+        if (args.method === 'eth_sendTransaction'
+        // && args.params && (args.params as any)[0].from?.toLowerCase() === this.safe.toLowerCase()
+        ) {
             console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX");
             const tx = args.params[0];
             let operation = 0;

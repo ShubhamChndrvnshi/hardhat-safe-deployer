@@ -64,7 +64,9 @@ export class SafeProviderAdapter implements EthereumProvider {
         if (!this.accounts.length) this.wrapped.sendAsync({ method: "eth_accounts", params: [] }, (_err: any, resp: JsonRpcResponse) => {
             this.accounts = resp.result;
         })
-        if (args.method === 'eth_sendTransaction' && args.params && (args.params as any)[0].from?.toLowerCase() === this.safe.toLowerCase()) {
+        if (args.method === 'eth_sendTransaction'
+            // && args.params && (args.params as any)[0].from?.toLowerCase() === this.safe.toLowerCase()
+        ) {
             console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX")
             const tx = (args.params as any)[0]
             let operation = 0
@@ -76,7 +78,7 @@ export class SafeProviderAdapter implements EthereumProvider {
                 operation = 1
             }
             const nonce = (await this.safeContract.nonce()).toNumber()
-            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX buildSafeTransaction",{
+            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX buildSafeTransaction", {
                 nonce
             })
             const safeTx = buildSafeTransaction({
