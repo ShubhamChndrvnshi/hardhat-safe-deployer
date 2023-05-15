@@ -61,12 +61,14 @@ export class SafeProviderAdapter implements EthereumProvider {
 
     async request(args: RequestArguments): Promise<unknown> {
         console.log("DEBUG: GNOSIS SAFE DEPLOYER request", args)
-        if (!this.accounts.length) this.wrapped.sendAsync({ method: "eth_accounts", params: [] }, (_err: any, resp: string[]) => {
-            this.accounts = resp;
+        if (!this.accounts.length) this.wrapped.sendAsync({ method: "eth_accounts", params: [] }, (_err: any, resp: JsonRpcResponse) => {
+            this.accounts = resp.result;
         })
         if (args.method === 'eth_sendTransaction' && args.params && (args.params as any)[0].from?.toLowerCase() === this.safe.toLowerCase()) {
+            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX")
             const tx = (args.params as any)[0]
             let operation = 0
+            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX buildTx")
             if (!tx.to) {
                 tx.to = this.createLibAddress
                 tx.data = this.createLibInterface.encodeFunctionData("performCreate", [tx.value || 0, tx.data])
@@ -74,6 +76,9 @@ export class SafeProviderAdapter implements EthereumProvider {
                 operation = 1
             }
             const nonce = (await this.safeContract.nonce()).toNumber()
+            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX buildSafeTransaction",{
+                nonce
+            })
             const safeTx = buildSafeTransaction({
                 to: utils.getAddress(tx.to),
                 data: tx.data,
@@ -83,11 +88,13 @@ export class SafeProviderAdapter implements EthereumProvider {
                 nonce
             })
             const estimation = await this.estimateSafeTx(this.safe, safeTx)
+            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX estimateSafeTx", estimation)
             safeTx.safeTxGas = estimation.safeTxGas
             const safeTxHash = utils._TypedDataEncoder.hash({
                 chainId: this.chainId,
                 verifyingContract: this.safe,
             }, EIP712_SAFE_TX_TYPE, safeTx)
+            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX")
             const signature = await signHash(this.signer, safeTxHash)
             await this.proposeTx(safeTxHash, safeTx, signature)
             this.submittedTxs.set(safeTxHash, {

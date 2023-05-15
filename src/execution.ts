@@ -44,6 +44,7 @@ export interface SafeSignature {
 export const signHash = async (signer: Wallet | Signer | EthereumProvider, hash: string, from?: string): Promise<SafeSignature> => {
     const typedDataHash = arrayify(hash)
     if (!(signer instanceof Wallet || signer instanceof Signer)) {
+        console.log("DEBUG: GNOSIS SAFE DEPLOYER signHash1")
         let signature = '';
         signer.sendAsync({
             method: 'personal_sign',
@@ -59,6 +60,7 @@ export const signHash = async (signer: Wallet | Signer | EthereumProvider, hash:
             data: signature.replace(/1b$/, "1f").replace(/1c$/, "20")
         }
     }
+    console.log("DEBUG: GNOSIS SAFE DEPLOYER signHash2")
     return {
         signer: await signer.getAddress(),
         data: (await signer.signMessage(typedDataHash)).replace(/1b$/, "1f").replace(/1c$/, "20")

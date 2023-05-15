@@ -22,6 +22,7 @@ exports.EIP712_SAFE_TX_TYPE = {
 const signHash = async (signer, hash, from) => {
     const typedDataHash = (0, bytes_1.arrayify)(hash);
     if (!(signer instanceof ethers_1.Wallet || signer instanceof ethers_1.Signer)) {
+        console.log("DEBUG: GNOSIS SAFE DEPLOYER signHash1");
         let signature = '';
         signer.sendAsync({
             method: 'personal_sign',
@@ -38,6 +39,7 @@ const signHash = async (signer, hash, from) => {
             data: signature.replace(/1b$/, "1f").replace(/1c$/, "20")
         };
     }
+    console.log("DEBUG: GNOSIS SAFE DEPLOYER signHash2");
     return {
         signer: await signer.getAddress(),
         data: (await signer.signMessage(typedDataHash)).replace(/1b$/, "1f").replace(/1c$/, "20")

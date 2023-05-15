@@ -50,11 +50,13 @@ class SafeProviderAdapter {
         console.log("DEBUG: GNOSIS SAFE DEPLOYER request", args);
         if (!this.accounts.length)
             this.wrapped.sendAsync({ method: "eth_accounts", params: [] }, (_err, resp) => {
-                this.accounts = resp;
+                this.accounts = resp.result;
             });
         if (args.method === 'eth_sendTransaction' && args.params && ((_a = args.params[0].from) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === this.safe.toLowerCase()) {
+            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX");
             const tx = args.params[0];
             let operation = 0;
+            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX buildTx");
             if (!tx.to) {
                 tx.to = this.createLibAddress;
                 tx.data = this.createLibInterface.encodeFunctionData("performCreate", [tx.value || 0, tx.data]);
@@ -62,6 +64,9 @@ class SafeProviderAdapter {
                 operation = 1;
             }
             const nonce = (await this.safeContract.nonce()).toNumber();
+            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX buildSafeTransaction", {
+                nonce
+            });
             const safeTx = (0, execution_1.buildSafeTransaction)({
                 to: ethers_1.utils.getAddress(tx.to),
                 data: tx.data,
@@ -71,11 +76,13 @@ class SafeProviderAdapter {
                 nonce
             });
             const estimation = await this.estimateSafeTx(this.safe, safeTx);
+            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX estimateSafeTx", estimation);
             safeTx.safeTxGas = estimation.safeTxGas;
             const safeTxHash = ethers_1.utils._TypedDataEncoder.hash({
                 chainId: this.chainId,
                 verifyingContract: this.safe,
             }, execution_1.EIP712_SAFE_TX_TYPE, safeTx);
+            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX");
             const signature = await (0, execution_1.signHash)(this.signer, safeTxHash);
             await this.proposeTx(safeTxHash, safeTx, signature);
             this.submittedTxs.set(safeTxHash, {
