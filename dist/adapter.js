@@ -15,7 +15,7 @@ class SafeProviderAdapter {
         this.submittedTxs = new Map();
         this.chainId = chainId;
         this.wrapped = wrapped;
-        this.accounts = [];
+        this.userAccounts = [];
         this.safe = ethers_1.utils.getAddress(safe);
         this.serviceUrl = serviceUrl !== null && serviceUrl !== void 0 ? serviceUrl : "https://safe-transaction.rinkeby.gnosis.io";
         this.safeContract = new ethers_1.Contract(safe, this.safeInterface, this.signer || hre.ethers.provider);
@@ -42,8 +42,8 @@ class SafeProviderAdapter {
     }
     async request(args) {
         var _a;
-        if (!this.signer && !this.accounts.length)
-            this.accounts = await this.wrapped.send('eth_accounts');
+        if (!this.signer && !this.userAccounts.length)
+            this.userAccounts = await this.wrapped.send('eth_accounts');
         if (args.method === 'eth_sendTransaction' && args.params && ((_a = args.params[0].from) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === this.safe.toLowerCase()) {
             const tx = args.params[0];
             let operation = 0;
@@ -68,7 +68,7 @@ class SafeProviderAdapter {
                 chainId: this.chainId,
                 verifyingContract: this.safe,
             }, execution_1.EIP712_SAFE_TX_TYPE, safeTx);
-            const from = this.accounts.length ? ethers_1.utils.getAddress(this.accounts[0]) : ethers_1.constants.AddressZero;
+            const from = this.userAccounts.length ? ethers_1.utils.getAddress(this.userAccounts[0]) : ethers_1.constants.AddressZero;
             const signature = await execution_1.signHash(this.signer || this.wrapped, safeTxHash, from);
             await this.proposeTx(safeTxHash, safeTx, signature);
             this.submittedTxs.set(safeTxHash, {
