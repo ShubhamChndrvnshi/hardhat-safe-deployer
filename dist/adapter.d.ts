@@ -16,6 +16,7 @@ export declare class SafeProviderAdapter implements EthereumProvider {
     accounts: string[];
     ethAdapter: EthersAdapter;
     safeSigner: SafeEthersSigner | undefined;
+    hhProvider: EthereumProvider;
     constructor(wrapped: any, safe: string, chainId: number, infuraApiKey: string, serviceUrl: string, hre: HardhatRuntimeEnvironment);
     estimateSafeTx(safe: string, safeTx: SafeTransaction): Promise<any>;
     getSafeTxDetails(safeTxHash: string): Promise<any>;

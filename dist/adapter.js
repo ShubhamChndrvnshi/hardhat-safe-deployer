@@ -26,6 +26,7 @@ class SafeProviderAdapter {
         const rpcUrls = this.getRpcUrls(infuraApiKey);
         this.safeContract = new ethers_1.Contract(safe, this.safeInterface, new ethers_1.providers.JsonRpcProvider(rpcUrls[this.chainId]));
         this.ethAdapter = SafeProviderAdapter.getSafeEthersAdapter(hre);
+        this.hhProvider = hre.network.provider;
     }
     async estimateSafeTx(safe, safeTx) {
         const url = `${this.serviceUrl}/api/v1/safes/${safe}/multisig-transactions/estimations/`;
@@ -48,9 +49,9 @@ class SafeProviderAdapter {
         return this.wrapped.sendAsync(payload, callback);
     }
     async request(args) {
+        var _a;
         console.log("DEBUG: GNOSIS SAFE DEPLOYER request", args);
-        this.safeSigner = await this.getGnosisSigner();
-        if (args.method === 'eth_sendTransaction' && args.params) {
+        if (args.method === 'eth_sendTransaction' && args.params && ((_a = args.params[0].from) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === this.safe.toLowerCase()) {
             console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX");
             const tx = args.params[0];
             let operation = 0;
@@ -81,7 +82,7 @@ class SafeProviderAdapter {
                 verifyingContract: this.safe,
             }, execution_1.EIP712_SAFE_TX_TYPE, safeTx);
             console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX");
-            const signature = await execution_1.signHash(this.safeSigner, safeTxHash);
+            const signature = await execution_1.signHash(this.safeSigner || this.hhProvider, safeTxHash, (await this.hhProvider.send('eth_accounts'))[0]);
             await this.proposeTx(safeTxHash, safeTx, signature);
             this.submittedTxs.set(safeTxHash, {
                 from: this.safe,

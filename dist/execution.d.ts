@@ -24,7 +24,7 @@ export interface SafeSignature {
     signer: string;
     data: string;
 }
-export declare const signHash: (signer: Wallet | Signer, hash: string, from?: string | undefined) => Promise<SafeSignature>;
+export declare const signHash: (signer: Wallet | Signer | any, hash: string, from?: string | undefined) => Promise<SafeSignature>;
 export declare const buildSafeTransaction: (template: {
     to: string;
     value?: BigNumber | number | string;

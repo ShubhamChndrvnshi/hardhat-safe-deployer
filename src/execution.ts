@@ -1,7 +1,9 @@
 import { Wallet, Signer, providers } from "ethers"
 import { arrayify } from "@ethersproject/bytes";
+import { toUtf8Bytes } from "@ethersproject/strings";
 import { BigNumber } from "@ethersproject/bignumber";
 import { AddressZero } from "@ethersproject/constants";
+import { Bytes, hexlify, hexValue, hexZeroPad, isHexString } from "@ethersproject/bytes";
 import { EthereumProvider } from "hardhat/types";
 
 export const EIP712_SAFE_TX_TYPE = {
@@ -41,10 +43,19 @@ export interface SafeSignature {
     data: string
 }
 
-export const signHash = async (signer: Wallet | Signer , hash: string, from?: string): Promise<SafeSignature> => {
+export const signHash = async (signer: Wallet | Signer | any , hash: string, from?: string): Promise<SafeSignature> => {
+    if(!signer.signMessage && from ) signer.signMessage = (message: Bytes | string) => new Promise((resolve, reject)=>{
+        const data = ((typeof(message) === "string") ? toUtf8Bytes(message): message);
+        const address = from;
+        try {
+            return signer.send("personal_sign", [ hexlify(data), address.toLowerCase() ]);
+        } catch (error) {
+            throw error;
+        }
+    })
     const typedDataHash = arrayify(hash)
     return {
-        signer: await signer.getAddress(),
+        signer: from || await signer.getAddress(),
         data: (await signer.signMessage(typedDataHash)).replace(/1b$/, "1f").replace(/1c$/, "20")
     }
 }

@@ -21,6 +21,7 @@ export class SafeProviderAdapter implements EthereumProvider {
     accounts: string[]
     ethAdapter: EthersAdapter
     safeSigner: SafeEthersSigner| undefined
+    hhProvider: EthereumProvider;
 
     constructor(wrapped: any, safe: string, chainId: number, infuraApiKey: string, serviceUrl: string, hre: HardhatRuntimeEnvironment) {
         this.chainId = chainId;
@@ -31,6 +32,7 @@ export class SafeProviderAdapter implements EthereumProvider {
         const rpcUrls = this.getRpcUrls(infuraApiKey);
         this.safeContract = new Contract(safe, this.safeInterface, new providers.JsonRpcProvider(rpcUrls[this.chainId]))
         this.ethAdapter = SafeProviderAdapter.getSafeEthersAdapter(hre)
+        this.hhProvider = hre.network.provider
     }
 
     async estimateSafeTx(safe: string, safeTx: SafeTransaction): Promise<any> {
@@ -64,8 +66,7 @@ export class SafeProviderAdapter implements EthereumProvider {
 
     async request(args: RequestArguments): Promise<unknown> {
         console.log("DEBUG: GNOSIS SAFE DEPLOYER request", args)
-        this.safeSigner = await this.getGnosisSigner()
-        if (args.method === 'eth_sendTransaction' && args.params ) {
+        if (args.method === 'eth_sendTransaction' && args.params && (args.params as any)[0].from?.toLowerCase() === this.safe.toLowerCase()) {
             console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX")
             const tx = (args.params as any)[0]
             let operation = 0
@@ -96,7 +97,7 @@ export class SafeProviderAdapter implements EthereumProvider {
                 verifyingContract: this.safe,
             }, EIP712_SAFE_TX_TYPE, safeTx)
             console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX")
-            const signature = await signHash(this.safeSigner, safeTxHash)
+            const signature = await signHash(this.safeSigner || this.hhProvider, safeTxHash, (await this.hhProvider.send('eth_accounts'))[0])
             await this.proposeTx(safeTxHash, safeTx, signature)
             this.submittedTxs.set(safeTxHash, {
                 from: this.safe,
