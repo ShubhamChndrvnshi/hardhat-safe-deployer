@@ -1,6 +1,7 @@
 import { EthereumProvider, HardhatRuntimeEnvironment, JsonRpcRequest, JsonRpcResponse, RequestArguments } from "hardhat/types";
 import { SafeSignature, SafeTransaction } from "./execution";
 import { Wallet, Contract, utils } from "ethers";
+import { Network } from "@ethersproject/networks";
 export declare class SafeProviderAdapter implements EthereumProvider {
     chainId: number;
     createLibAddress: string;
@@ -35,6 +36,6 @@ export declare class SafeProviderAdapter implements EthereumProvider {
     prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): this;
     eventNames(): (string | symbol)[];
     send(method: string, params: any): Promise<any>;
-    private getRpcUrls;
+    getNetwork(): Promise<Network>;
 }
 //# sourceMappingURL=adapter.d.ts.map

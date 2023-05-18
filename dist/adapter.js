@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SafeProviderAdapter = void 0;
 const execution_1 = require("./execution");
 const ethers_1 = require("ethers");
+const networks_1 = require("@ethersproject/networks");
 const axios_1 = __importDefault(require("axios"));
 class SafeProviderAdapter {
     constructor(wrapped, safe, chainId, serviceUrl, hre, signer) {
@@ -166,15 +167,10 @@ class SafeProviderAdapter {
     async send(method, params) {
         return await this.request({ method, params });
     }
-    getRpcUrls(apiKey) {
-        const networks = {
-            1: `https://mainnet.infura.io/v3/${apiKey}`,
-            3: `https://ropsten.infura.io/v3/${apiKey}`,
-            4: `https://rinkeby.infura.io/v3/${apiKey}`,
-            42: `https://kovan.infura.io/v3/${apiKey}`,
-            5: `https://goerli.infura.io/v3/${apiKey}`,
-        };
-        return networks;
+    async getNetwork() {
+        return new Promise(resolve => {
+            resolve(networks_1.getNetwork(this.chainId));
+        });
     }
 }
 exports.SafeProviderAdapter = SafeProviderAdapter;

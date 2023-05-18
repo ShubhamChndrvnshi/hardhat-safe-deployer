@@ -1,6 +1,7 @@
 import { EthereumProvider, HardhatRuntimeEnvironment, JsonRpcRequest, JsonRpcResponse, RequestArguments } from "hardhat/types";
 import { buildSafeTransaction, EIP712_SAFE_TX_TYPE, SafeSignature, SafeTransaction, signHash } from "./execution"
 import { Wallet, Contract, utils, constants } from "ethers";
+import { Network, getNetwork } from "@ethersproject/networks";
 import axios from "axios"
 
 export class SafeProviderAdapter implements EthereumProvider {
@@ -175,15 +176,9 @@ export class SafeProviderAdapter implements EthereumProvider {
         return await this.request({ method, params })
     }
 
-    private getRpcUrls(apiKey: string): { [network: string]: string } {
-        const networks = {
-            1: `https://mainnet.infura.io/v3/${apiKey}`,
-            3: `https://ropsten.infura.io/v3/${apiKey}`,
-            4: `https://rinkeby.infura.io/v3/${apiKey}`,
-            42: `https://kovan.infura.io/v3/${apiKey}`,
-            5: `https://goerli.infura.io/v3/${apiKey}`,
-        };
-
-        return networks;
+    async getNetwork(): Promise<Network>{
+        return new Promise(resolve=>{
+            resolve(getNetwork(this.chainId))
+        })
     }
 }
