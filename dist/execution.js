@@ -26,10 +26,10 @@ const signHash = async (signer, hash, from) => {
             const data = ((typeof (message) === "string") ? strings_1.toUtf8Bytes(message) : message);
             const address = from;
             try {
-                return signer.send("personal_sign", [bytes_2.hexlify(data), address.toLowerCase()]);
+                resolve(signer.send("personal_sign", [bytes_2.hexlify(data), address.toLowerCase()]));
             }
             catch (error) {
-                throw error;
+                reject(error);
             }
         });
     const typedDataHash = bytes_1.arrayify(hash);

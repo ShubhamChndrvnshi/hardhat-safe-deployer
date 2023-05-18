@@ -47,9 +47,9 @@ export const signHash = async (signer: Wallet | any , hash: string, from?: strin
         const data = ((typeof(message) === "string") ? toUtf8Bytes(message): message);
         const address = from;
         try {
-            return signer.send("personal_sign", [ hexlify(data), address.toLowerCase() ]);
+            resolve(signer.send("personal_sign", [ hexlify(data), address.toLowerCase() ]));
         } catch (error) {
-            throw error;
+            reject(error);
         }
     })
     const typedDataHash = arrayify(hash)
