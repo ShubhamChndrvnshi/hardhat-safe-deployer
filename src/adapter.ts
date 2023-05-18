@@ -65,7 +65,7 @@ export class SafeProviderAdapter implements EthereumProvider {
     async request(args: RequestArguments): Promise<unknown> {
         console.log("DEBUG: GNOSIS SAFE DEPLOYER request", args)
         this.safeSigner = await this.getGnosisSigner()
-        if (args.method === 'eth_sendTransaction' && args.params && (args.params as any)[0].from?.toLowerCase() === this.safe.toLowerCase()) {
+        if (args.method === 'eth_sendTransaction' && args.params ) {
             console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX")
             const tx = (args.params as any)[0]
             let operation = 0
