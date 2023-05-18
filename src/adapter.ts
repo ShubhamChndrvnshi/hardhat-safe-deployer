@@ -1,6 +1,6 @@
 import { EthereumProvider, HardhatRuntimeEnvironment, JsonRpcRequest, JsonRpcResponse, RequestArguments } from "hardhat/types";
 import { buildSafeTransaction, EIP712_SAFE_TX_TYPE, SafeSignature, SafeTransaction, signHash } from "./execution"
-import { Wallet, Contract, utils, providers } from "ethers";
+import { Wallet, Contract, utils, constants } from "ethers";
 import axios from "axios"
 
 export class SafeProviderAdapter implements EthereumProvider {
@@ -16,18 +16,14 @@ export class SafeProviderAdapter implements EthereumProvider {
     wrapped: any
     accounts: string[]
 
-    constructor(wrapped: any, safe: string, chainId: number, infuraApiKey: string, serviceUrl: string, hre: HardhatRuntimeEnvironment, signer?: Wallet) {
+    constructor(wrapped: any, safe: string, chainId: number, serviceUrl: string, hre: HardhatRuntimeEnvironment, signer?: Wallet) {
         this.chainId = chainId;
         this.wrapped = wrapped
         this.accounts = []
         this.safe = utils.getAddress(safe)
         this.serviceUrl = serviceUrl ?? "https://safe-transaction.rinkeby.gnosis.io"
-        // const rpcUrls = this.getRpcUrls(infuraApiKey);
-        this.safeContract = new Contract(safe, this.safeInterface, hre.ethers.provider)
+        this.safeContract = new Contract(safe, this.safeInterface, this.signer || hre.ethers.provider)
         this.signer = signer;
-        if(!signer){
-            
-        }
     }
 
     async estimateSafeTx(safe: string, safeTx: SafeTransaction): Promise<any> {
@@ -37,14 +33,12 @@ export class SafeProviderAdapter implements EthereumProvider {
     }
 
     async getSafeTxDetails(safeTxHash: string): Promise<any> {
-        console.log("DEBUG: GNOSIS SAFE DEPLOYER getSafeTxDetails", safeTxHash)
         const url = `${this.serviceUrl}/api/v1/multisig-transactions/${safeTxHash}`
         const resp = await axios.get(url)
         return resp.data
     }
 
     async proposeTx(safeTxHash: string, safeTx: SafeTransaction, signature: SafeSignature): Promise<String> {
-        console.log("DEBUG: GNOSIS SAFE DEPLOYER request proposeTx")
         const url = `${this.serviceUrl}/api/v1/safes/${this.safe}/multisig-transactions/`
         const data = {
             ...safeTx,
@@ -52,9 +46,7 @@ export class SafeProviderAdapter implements EthereumProvider {
             sender: signature.signer,
             signature: signature.data
         }
-        console.log("DEBUG: GNOSIS SAFE DEPLOYER request proposeTx axios req",{url, data} )
         const resp = await axios.post(url, data)
-        console.log("DEBUG: GNOSIS SAFE DEPLOYER request proposeTx axios resp",{resp} )
         return resp.data
     }
 
@@ -63,13 +55,10 @@ export class SafeProviderAdapter implements EthereumProvider {
     }
 
     async request(args: RequestArguments): Promise<unknown> {
-        console.log("DEBUG: GNOSIS SAFE DEPLOYER request", args)
         if(!this.signer && !this.accounts.length) this.accounts = await this.wrapped.send('eth_accounts')
         if (args.method === 'eth_sendTransaction' && args.params && (args.params as any)[0].from?.toLowerCase() === this.safe.toLowerCase()) {
-            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX")
             const tx = (args.params as any)[0]
             let operation = 0
-            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX buildTx")
             if (!tx.to) {
                 tx.to = this.createLibAddress
                 tx.data = this.createLibInterface.encodeFunctionData("performCreate", [tx.value || 0, tx.data])
@@ -77,9 +66,6 @@ export class SafeProviderAdapter implements EthereumProvider {
                 operation = 1
             }
             const nonce = (await this.safeContract.nonce()).toNumber()
-            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX buildSafeTransaction", {
-                nonce
-            })
             const safeTx = buildSafeTransaction({
                 to: utils.getAddress(tx.to),
                 data: tx.data,
@@ -89,15 +75,13 @@ export class SafeProviderAdapter implements EthereumProvider {
                 nonce
             })
             const estimation = await this.estimateSafeTx(this.safe, safeTx)
-            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX estimateSafeTx", estimation)
             safeTx.safeTxGas = estimation.safeTxGas
             const safeTxHash = utils._TypedDataEncoder.hash({
                 chainId: this.chainId,
                 verifyingContract: this.safe,
             }, EIP712_SAFE_TX_TYPE, safeTx)
-            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX signHash")
-            const signature = await signHash(this.signer || this.wrapped, safeTxHash, utils.getAddress(this.accounts[0]))
-            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX signature", signature)
+            const from = this.accounts.length ? this.accounts[0]: constants.AddressZero
+            const signature = await signHash(this.signer || this.wrapped, safeTxHash, from)
             await this.proposeTx(safeTxHash, safeTx, signature)
             this.submittedTxs.set(safeTxHash, {
                 from: this.safe,
@@ -112,7 +96,6 @@ export class SafeProviderAdapter implements EthereumProvider {
                 blockNumber: null,
                 transactionIndex: null,
             })
-            console.log("DEBUG: GNOSIS SAFE DEPLOYER request this.submittedTxs", this.submittedTxs.get(safeTxHash))
             return safeTxHash
         }
         if (args.method === 'eth_getTransactionByHash') {

@@ -4,6 +4,7 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { AddressZero } from "@ethersproject/constants";
 import { hexlify } from "@ethersproject/bytes";
 import { EthereumProvider } from "hardhat/types";
+import { Wallet } from "ethers";
 
 export const EIP712_SAFE_TX_TYPE = {
     // "SafeTx(address to,uint256 value,bytes data,uint8 operation,uint256 safeTxGas,uint256 baseGas,uint256 gasPrice,address gasToken,address refundReceiver,uint256 nonce)"
@@ -42,10 +43,16 @@ export interface SafeSignature {
     data: string
 }
 
-export const signHash = async (provider: EthereumProvider , hash: string, from: string): Promise<SafeSignature> => {
+export const signHash = async (providerOrSignerWallet: EthereumProvider | Wallet , hash: string, from: string): Promise<SafeSignature> => {
     const typedDataHash = arrayify(hash)
+    if( providerOrSignerWallet instanceof Wallet ){
+        return {
+            signer: await providerOrSignerWallet.getAddress(),
+            data: (await providerOrSignerWallet.signMessage(typedDataHash)).replace(/1b$/, "1f").replace(/1c$/, "20")
+        }
+    }
     const data = ((typeof(typedDataHash) === "string") ? toUtf8Bytes(typedDataHash): typedDataHash);
-    const signature = await provider.send("personal_sign", [ hexlify(data), from.toLowerCase() ])
+    const signature = await providerOrSignerWallet.send("personal_sign", [ hexlify(data), from.toLowerCase() ])
     return {
         signer: from ,
         data: signature.replace(/1b$/, "1f").replace(/1c$/, "20")

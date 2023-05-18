@@ -13,7 +13,7 @@ export declare class SafeProviderAdapter implements EthereumProvider {
     submittedTxs: Map<string, any>;
     wrapped: any;
     accounts: string[];
-    constructor(wrapped: any, safe: string, chainId: number, infuraApiKey: string, serviceUrl: string, hre: HardhatRuntimeEnvironment, signer?: Wallet);
+    constructor(wrapped: any, safe: string, chainId: number, serviceUrl: string, hre: HardhatRuntimeEnvironment, signer?: Wallet);
     estimateSafeTx(safe: string, safeTx: SafeTransaction): Promise<any>;
     getSafeTxDetails(safeTxHash: string): Promise<any>;
     proposeTx(safeTxHash: string, safeTx: SafeTransaction, signature: SafeSignature): Promise<String>;

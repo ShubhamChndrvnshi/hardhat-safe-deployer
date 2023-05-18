@@ -8,7 +8,7 @@ const execution_1 = require("./execution");
 const ethers_1 = require("ethers");
 const axios_1 = __importDefault(require("axios"));
 class SafeProviderAdapter {
-    constructor(wrapped, safe, chainId, infuraApiKey, serviceUrl, hre, signer) {
+    constructor(wrapped, safe, chainId, serviceUrl, hre, signer) {
         this.createLibAddress = "0x7cbB62EaA69F79e6873cD1ecB2392971036cFAa4";
         this.createLibInterface = new ethers_1.utils.Interface(["function performCreate(uint256,bytes)"]);
         this.safeInterface = new ethers_1.utils.Interface(["function nonce() view returns(uint256)"]);
@@ -18,11 +18,8 @@ class SafeProviderAdapter {
         this.accounts = [];
         this.safe = ethers_1.utils.getAddress(safe);
         this.serviceUrl = serviceUrl !== null && serviceUrl !== void 0 ? serviceUrl : "https://safe-transaction.rinkeby.gnosis.io";
-        // const rpcUrls = this.getRpcUrls(infuraApiKey);
-        this.safeContract = new ethers_1.Contract(safe, this.safeInterface, hre.ethers.provider);
+        this.safeContract = new ethers_1.Contract(safe, this.safeInterface, this.signer || hre.ethers.provider);
         this.signer = signer;
-        if (!signer) {
-        }
     }
     async estimateSafeTx(safe, safeTx) {
         const url = `${this.serviceUrl}/api/v1/safes/${safe}/multisig-transactions/estimations/`;
@@ -30,18 +27,14 @@ class SafeProviderAdapter {
         return resp.data;
     }
     async getSafeTxDetails(safeTxHash) {
-        console.log("DEBUG: GNOSIS SAFE DEPLOYER getSafeTxDetails", safeTxHash);
         const url = `${this.serviceUrl}/api/v1/multisig-transactions/${safeTxHash}`;
         const resp = await axios_1.default.get(url);
         return resp.data;
     }
     async proposeTx(safeTxHash, safeTx, signature) {
-        console.log("DEBUG: GNOSIS SAFE DEPLOYER request proposeTx");
         const url = `${this.serviceUrl}/api/v1/safes/${this.safe}/multisig-transactions/`;
         const data = Object.assign(Object.assign({}, safeTx), { contractTransactionHash: safeTxHash, sender: signature.signer, signature: signature.data });
-        console.log("DEBUG: GNOSIS SAFE DEPLOYER request proposeTx axios req", { url, data });
         const resp = await axios_1.default.post(url, data);
-        console.log("DEBUG: GNOSIS SAFE DEPLOYER request proposeTx axios resp", { resp });
         return resp.data;
     }
     sendAsync(payload, callback) {
@@ -49,14 +42,11 @@ class SafeProviderAdapter {
     }
     async request(args) {
         var _a;
-        console.log("DEBUG: GNOSIS SAFE DEPLOYER request", args);
         if (!this.signer && !this.accounts.length)
             this.accounts = await this.wrapped.send('eth_accounts');
         if (args.method === 'eth_sendTransaction' && args.params && ((_a = args.params[0].from) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === this.safe.toLowerCase()) {
-            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX");
             const tx = args.params[0];
             let operation = 0;
-            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX buildTx");
             if (!tx.to) {
                 tx.to = this.createLibAddress;
                 tx.data = this.createLibInterface.encodeFunctionData("performCreate", [tx.value || 0, tx.data]);
@@ -64,9 +54,6 @@ class SafeProviderAdapter {
                 operation = 1;
             }
             const nonce = (await this.safeContract.nonce()).toNumber();
-            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX buildSafeTransaction", {
-                nonce
-            });
             const safeTx = execution_1.buildSafeTransaction({
                 to: ethers_1.utils.getAddress(tx.to),
                 data: tx.data,
@@ -76,15 +63,13 @@ class SafeProviderAdapter {
                 nonce
             });
             const estimation = await this.estimateSafeTx(this.safe, safeTx);
-            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX estimateSafeTx", estimation);
             safeTx.safeTxGas = estimation.safeTxGas;
             const safeTxHash = ethers_1.utils._TypedDataEncoder.hash({
                 chainId: this.chainId,
                 verifyingContract: this.safe,
             }, execution_1.EIP712_SAFE_TX_TYPE, safeTx);
-            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX signHash");
-            const signature = await execution_1.signHash(this.signer || this.wrapped, safeTxHash, ethers_1.utils.getAddress(this.accounts[0]));
-            console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX signature", signature);
+            const from = this.accounts.length ? this.accounts[0] : ethers_1.constants.AddressZero;
+            const signature = await execution_1.signHash(this.signer || this.wrapped, safeTxHash, from);
             await this.proposeTx(safeTxHash, safeTx, signature);
             this.submittedTxs.set(safeTxHash, {
                 from: this.safe,
@@ -99,7 +84,6 @@ class SafeProviderAdapter {
                 blockNumber: null,
                 transactionIndex: null,
             });
-            console.log("DEBUG: GNOSIS SAFE DEPLOYER request this.submittedTxs", this.submittedTxs.get(safeTxHash));
             return safeTxHash;
         }
         if (args.method === 'eth_getTransactionByHash') {
