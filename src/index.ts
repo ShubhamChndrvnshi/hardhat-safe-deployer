@@ -4,7 +4,7 @@ import { extendEnvironment } from "hardhat/config"
 import { EthereumProvider } from "hardhat/types";
 import { SafeProviderAdapter } from "./adapter"
 
-export const setupSafeDeployer = (payload: { safe: string, serivceUrl: string | undefined, infuraApiKey: string }) => {
+export const setupSafeDeployer = (payload: { safe: string, serivceUrl: string, infuraApiKey: string }) => {
   extendEnvironment((env) => {
     const { infuraApiKey, safe, serivceUrl } = payload
     const { chainId } = env.network.config;
