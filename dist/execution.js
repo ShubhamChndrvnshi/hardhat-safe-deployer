@@ -20,22 +20,13 @@ exports.EIP712_SAFE_TX_TYPE = {
         { type: "uint256", name: "nonce" },
     ]
 };
-const signHash = async (signer, hash, from) => {
-    if (!signer.signMessage && from)
-        signer.signMessage = (message) => new Promise((resolve, reject) => {
-            const data = ((typeof (message) === "string") ? strings_1.toUtf8Bytes(message) : message);
-            const address = from;
-            try {
-                resolve(signer.send("personal_sign", [bytes_2.hexlify(data), address.toLowerCase()]));
-            }
-            catch (error) {
-                reject(error);
-            }
-        });
+const signHash = async (provider, hash, from) => {
     const typedDataHash = bytes_1.arrayify(hash);
+    const data = ((typeof (typedDataHash) === "string") ? strings_1.toUtf8Bytes(typedDataHash) : typedDataHash);
+    const signature = await provider.send("personal_sign", [bytes_2.hexlify(data), from.toLowerCase()]);
     return {
-        signer: from || await signer.getAddress(),
-        data: (await signer.signMessage(typedDataHash)).replace(/1b$/, "1f").replace(/1c$/, "20")
+        signer: from,
+        data: signature.replace(/1b$/, "1f").replace(/1c$/, "20")
     };
 };
 exports.signHash = signHash;

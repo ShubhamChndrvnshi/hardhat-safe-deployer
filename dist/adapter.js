@@ -8,7 +8,7 @@ const execution_1 = require("./execution");
 const ethers_1 = require("ethers");
 const axios_1 = __importDefault(require("axios"));
 class SafeProviderAdapter {
-    constructor(wrapped, safe, chainId, infuraApiKey, serviceUrl, hre) {
+    constructor(wrapped, safe, chainId, infuraApiKey, serviceUrl, hre, signer) {
         this.createLibAddress = "0x7cbB62EaA69F79e6873cD1ecB2392971036cFAa4";
         this.createLibInterface = new ethers_1.utils.Interface(["function performCreate(uint256,bytes)"]);
         this.safeInterface = new ethers_1.utils.Interface(["function nonce() view returns(uint256)"]);
@@ -20,6 +20,9 @@ class SafeProviderAdapter {
         this.serviceUrl = serviceUrl !== null && serviceUrl !== void 0 ? serviceUrl : "https://safe-transaction.rinkeby.gnosis.io";
         // const rpcUrls = this.getRpcUrls(infuraApiKey);
         this.safeContract = new ethers_1.Contract(safe, this.safeInterface, hre.ethers.provider);
+        this.signer = signer;
+        if (!signer) {
+        }
     }
     async estimateSafeTx(safe, safeTx) {
         const url = `${this.serviceUrl}/api/v1/safes/${safe}/multisig-transactions/estimations/`;

@@ -16,7 +16,7 @@ export class SafeProviderAdapter implements EthereumProvider {
     wrapped: any
     accounts: string[]
 
-    constructor(wrapped: any, safe: string, chainId: number, infuraApiKey: string, serviceUrl: string, hre: HardhatRuntimeEnvironment) {
+    constructor(wrapped: any, safe: string, chainId: number, infuraApiKey: string, serviceUrl: string, hre: HardhatRuntimeEnvironment, signer?: Wallet) {
         this.chainId = chainId;
         this.wrapped = wrapped
         this.accounts = []
@@ -24,6 +24,10 @@ export class SafeProviderAdapter implements EthereumProvider {
         this.serviceUrl = serviceUrl ?? "https://safe-transaction.rinkeby.gnosis.io"
         // const rpcUrls = this.getRpcUrls(infuraApiKey);
         this.safeContract = new Contract(safe, this.safeInterface, hre.ethers.provider)
+        this.signer = signer;
+        if(!signer){
+            
+        }
     }
 
     async estimateSafeTx(safe: string, safeTx: SafeTransaction): Promise<any> {
