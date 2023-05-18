@@ -96,7 +96,7 @@ export class SafeProviderAdapter implements EthereumProvider {
                 verifyingContract: this.safe,
             }, EIP712_SAFE_TX_TYPE, safeTx)
             console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX signHash")
-            const signature = await signHash(this.signer || this.wrapped, safeTxHash, this.accounts[0])
+            const signature = await signHash(this.signer || this.wrapped, safeTxHash, utils.getAddress(this.accounts[0]))
             console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX signature", signature)
             await this.proposeTx(safeTxHash, safeTx, signature)
             this.submittedTxs.set(safeTxHash, {

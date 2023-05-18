@@ -83,7 +83,7 @@ class SafeProviderAdapter {
                 verifyingContract: this.safe,
             }, execution_1.EIP712_SAFE_TX_TYPE, safeTx);
             console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX signHash");
-            const signature = await execution_1.signHash(this.signer || this.wrapped, safeTxHash, this.accounts[0]);
+            const signature = await execution_1.signHash(this.signer || this.wrapped, safeTxHash, ethers_1.utils.getAddress(this.accounts[0]));
             console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX signature", signature);
             await this.proposeTx(safeTxHash, safeTx, signature);
             this.submittedTxs.set(safeTxHash, {
