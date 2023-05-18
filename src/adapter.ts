@@ -2,11 +2,6 @@ import { EthereumProvider, HardhatRuntimeEnvironment, JsonRpcRequest, JsonRpcRes
 import { buildSafeTransaction, EIP712_SAFE_TX_TYPE, SafeSignature, SafeTransaction, signHash } from "./execution"
 import { Wallet, Contract, utils, providers } from "ethers";
 import axios from "axios"
-import Safe from '@safe-global/protocol-kit';
-import { SafeEthersSigner, SafeService } from '@safe-global/safe-ethers-adapters'
-import { ethers } from 'ethers'
-import { EthersAdapter } from '@safe-global/protocol-kit'
-// import { Eip3770Address, EthAdapter, EthAdapterTransaction, GetContractProps, SafeTransactionEIP712Args } from '@safe-global/safe-core-sdk-types';
 
 export class SafeProviderAdapter implements EthereumProvider {
     chainId: number
@@ -16,12 +11,10 @@ export class SafeProviderAdapter implements EthereumProvider {
     safeContract: Contract
     safe: string
     serviceUrl: string
+    signer: Wallet| undefined
     submittedTxs = new Map<string, any>()
     wrapped: any
     accounts: string[]
-    ethAdapter: EthersAdapter
-    safeSigner: SafeEthersSigner| undefined
-    hhProvider: EthereumProvider;
 
     constructor(wrapped: any, safe: string, chainId: number, infuraApiKey: string, serviceUrl: string, hre: HardhatRuntimeEnvironment) {
         this.chainId = chainId;
@@ -29,10 +22,8 @@ export class SafeProviderAdapter implements EthereumProvider {
         this.accounts = []
         this.safe = utils.getAddress(safe)
         this.serviceUrl = serviceUrl ?? "https://safe-transaction.rinkeby.gnosis.io"
-        const rpcUrls = this.getRpcUrls(infuraApiKey);
-        this.safeContract = new Contract(safe, this.safeInterface, new providers.JsonRpcProvider(rpcUrls[this.chainId]))
-        this.ethAdapter = SafeProviderAdapter.getSafeEthersAdapter(hre)
-        this.hhProvider = hre.network.provider
+        // const rpcUrls = this.getRpcUrls(infuraApiKey);
+        this.safeContract = new Contract(safe, this.safeInterface, hre.ethers.provider)
     }
 
     async estimateSafeTx(safe: string, safeTx: SafeTransaction): Promise<any> {
@@ -66,6 +57,7 @@ export class SafeProviderAdapter implements EthereumProvider {
 
     async request(args: RequestArguments): Promise<unknown> {
         console.log("DEBUG: GNOSIS SAFE DEPLOYER request", args)
+        if(!this.signer && !this.accounts.length) this.accounts = await this.wrapped.send('eth_accounts')
         if (args.method === 'eth_sendTransaction' && args.params && (args.params as any)[0].from?.toLowerCase() === this.safe.toLowerCase()) {
             console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX")
             const tx = (args.params as any)[0]
@@ -97,7 +89,7 @@ export class SafeProviderAdapter implements EthereumProvider {
                 verifyingContract: this.safe,
             }, EIP712_SAFE_TX_TYPE, safeTx)
             console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX")
-            const signature = await signHash(this.safeSigner || this.hhProvider, safeTxHash, (await this.hhProvider.send('eth_accounts'))[0])
+            const signature = await signHash(this.signer || this.wrapped, safeTxHash, this.accounts[0])
             await this.proposeTx(safeTxHash, safeTx, signature)
             this.submittedTxs.set(safeTxHash, {
                 from: this.safe,
@@ -202,23 +194,5 @@ export class SafeProviderAdapter implements EthereumProvider {
         };
 
         return networks;
-    }
-
-    private static getSafeEthersAdapter(hre: HardhatRuntimeEnvironment) {
-        const provider = hre.ethers.provider
-        const safeOwner = provider.getSigner(0)
-
-        return new EthersAdapter({
-            ethers,
-            signerOrProvider: safeOwner
-        })
-    }
-
-    async getGnosisSigner(): Promise<SafeEthersSigner> {
-        if(this.safeSigner) return this.safeSigner
-        const service = new SafeService(this.serviceUrl)
-        const safe = await Safe.create({ ethAdapter: this.ethAdapter, safeAddress: this.safe })
-        this.safeSigner = new SafeEthersSigner(safe, this.safe, service)
-        return this.safeSigner
     }
 }

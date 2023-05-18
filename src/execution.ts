@@ -1,10 +1,9 @@
-import { Wallet, Signer, providers } from "ethers"
+import { Wallet } from "ethers"
 import { arrayify } from "@ethersproject/bytes";
 import { toUtf8Bytes } from "@ethersproject/strings";
 import { BigNumber } from "@ethersproject/bignumber";
 import { AddressZero } from "@ethersproject/constants";
-import { Bytes, hexlify, hexValue, hexZeroPad, isHexString } from "@ethersproject/bytes";
-import { EthereumProvider } from "hardhat/types";
+import { Bytes, hexlify } from "@ethersproject/bytes";
 
 export const EIP712_SAFE_TX_TYPE = {
     // "SafeTx(address to,uint256 value,bytes data,uint8 operation,uint256 safeTxGas,uint256 baseGas,uint256 gasPrice,address gasToken,address refundReceiver,uint256 nonce)"
@@ -43,7 +42,7 @@ export interface SafeSignature {
     data: string
 }
 
-export const signHash = async (signer: Wallet | Signer | any , hash: string, from?: string): Promise<SafeSignature> => {
+export const signHash = async (signer: Wallet | any , hash: string, from?: string): Promise<SafeSignature> => {
     if(!signer.signMessage && from ) signer.signMessage = (message: Bytes | string) => new Promise((resolve, reject)=>{
         const data = ((typeof(message) === "string") ? toUtf8Bytes(message): message);
         const address = from;

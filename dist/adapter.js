@@ -7,11 +7,6 @@ exports.SafeProviderAdapter = void 0;
 const execution_1 = require("./execution");
 const ethers_1 = require("ethers");
 const axios_1 = __importDefault(require("axios"));
-const protocol_kit_1 = __importDefault(require("@safe-global/protocol-kit"));
-const safe_ethers_adapters_1 = require("@safe-global/safe-ethers-adapters");
-const ethers_2 = require("ethers");
-const protocol_kit_2 = require("@safe-global/protocol-kit");
-// import { Eip3770Address, EthAdapter, EthAdapterTransaction, GetContractProps, SafeTransactionEIP712Args } from '@safe-global/safe-core-sdk-types';
 class SafeProviderAdapter {
     constructor(wrapped, safe, chainId, infuraApiKey, serviceUrl, hre) {
         this.createLibAddress = "0x7cbB62EaA69F79e6873cD1ecB2392971036cFAa4";
@@ -23,10 +18,8 @@ class SafeProviderAdapter {
         this.accounts = [];
         this.safe = ethers_1.utils.getAddress(safe);
         this.serviceUrl = serviceUrl !== null && serviceUrl !== void 0 ? serviceUrl : "https://safe-transaction.rinkeby.gnosis.io";
-        const rpcUrls = this.getRpcUrls(infuraApiKey);
-        this.safeContract = new ethers_1.Contract(safe, this.safeInterface, new ethers_1.providers.JsonRpcProvider(rpcUrls[this.chainId]));
-        this.ethAdapter = SafeProviderAdapter.getSafeEthersAdapter(hre);
-        this.hhProvider = hre.network.provider;
+        // const rpcUrls = this.getRpcUrls(infuraApiKey);
+        this.safeContract = new ethers_1.Contract(safe, this.safeInterface, hre.ethers.provider);
     }
     async estimateSafeTx(safe, safeTx) {
         const url = `${this.serviceUrl}/api/v1/safes/${safe}/multisig-transactions/estimations/`;
@@ -51,6 +44,8 @@ class SafeProviderAdapter {
     async request(args) {
         var _a;
         console.log("DEBUG: GNOSIS SAFE DEPLOYER request", args);
+        if (!this.signer && !this.accounts.length)
+            this.accounts = await this.wrapped.send('eth_accounts');
         if (args.method === 'eth_sendTransaction' && args.params && ((_a = args.params[0].from) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === this.safe.toLowerCase()) {
             console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX");
             const tx = args.params[0];
@@ -82,7 +77,7 @@ class SafeProviderAdapter {
                 verifyingContract: this.safe,
             }, execution_1.EIP712_SAFE_TX_TYPE, safeTx);
             console.log("DEBUG: GNOSIS SAFE DEPLOYER request sendingTX");
-            const signature = await execution_1.signHash(this.safeSigner || this.hhProvider, safeTxHash, (await this.hhProvider.send('eth_accounts'))[0]);
+            const signature = await execution_1.signHash(this.signer || this.wrapped, safeTxHash, this.accounts[0]);
             await this.proposeTx(safeTxHash, safeTx, signature);
             this.submittedTxs.set(safeTxHash, {
                 from: this.safe,
@@ -189,22 +184,6 @@ class SafeProviderAdapter {
             5: `https://goerli.infura.io/v3/${apiKey}`,
         };
         return networks;
-    }
-    static getSafeEthersAdapter(hre) {
-        const provider = hre.ethers.provider;
-        const safeOwner = provider.getSigner(0);
-        return new protocol_kit_2.EthersAdapter({
-            ethers: ethers_2.ethers,
-            signerOrProvider: safeOwner
-        });
-    }
-    async getGnosisSigner() {
-        if (this.safeSigner)
-            return this.safeSigner;
-        const service = new safe_ethers_adapters_1.SafeService(this.serviceUrl);
-        const safe = await protocol_kit_1.default.create({ ethAdapter: this.ethAdapter, safeAddress: this.safe });
-        this.safeSigner = new safe_ethers_adapters_1.SafeEthersSigner(safe, this.safe, service);
-        return this.safeSigner;
     }
 }
 exports.SafeProviderAdapter = SafeProviderAdapter;
