@@ -41,21 +41,8 @@ export interface SafeSignature {
     data: string
 }
 
-export const signHash = async (signer: Wallet | Signer | EthereumProvider, hash: string, from?: string): Promise<SafeSignature> => {
+export const signHash = async (signer: Wallet | Signer , hash: string, from?: string): Promise<SafeSignature> => {
     const typedDataHash = arrayify(hash)
-    if (!(signer instanceof Wallet || signer instanceof Signer)) {
-        console.log("DEBUG: GNOSIS SAFE DEPLOYER signHash1")
-        const signature = await signer.request({
-            method: 'personal_sign',
-            params: [hash, from],
-          })
-          console.log(" DEBUG: GNOSIS SAFE DEPLOYER signature", signature)
-        return {
-            signer: from || "",
-            data: String(signature).replace(/1b$/, "1f").replace(/1c$/, "20")
-        }
-    }
-    console.log("DEBUG: GNOSIS SAFE DEPLOYER signHash2")
     return {
         signer: await signer.getAddress(),
         data: (await signer.signMessage(typedDataHash)).replace(/1b$/, "1f").replace(/1c$/, "20")

@@ -5,15 +5,13 @@ require("@nomiclabs/hardhat-ethers");
 const config_1 = require("hardhat/config");
 const adapter_1 = require("./adapter");
 const setupSafeDeployer = (payload) => {
-    (0, config_1.extendEnvironment)((env) => {
+    config_1.extendEnvironment((env) => {
         const { infuraApiKey, safe, serivceUrl } = payload;
         const { chainId } = env.network.config;
         if (!chainId) {
             throw new Error('The chainId was required in hardhat network config');
         }
-        if (payload.signer)
-            payload.signer = payload.signer.connect(env.ethers.provider);
-        env.network.provider = new adapter_1.SafeProviderAdapter(env.network.provider, payload.signer || env.network.provider, safe, chainId, infuraApiKey, serivceUrl);
+        env.network.provider = new adapter_1.SafeProviderAdapter(env.network.provider, safe, chainId, infuraApiKey, String(serivceUrl), env);
     });
 };
 exports.setupSafeDeployer = setupSafeDeployer;

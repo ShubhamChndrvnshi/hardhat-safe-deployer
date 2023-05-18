@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildSafeTransaction = exports.signHash = exports.EIP712_SAFE_TX_TYPE = void 0;
-const ethers_1 = require("ethers");
 const bytes_1 = require("@ethersproject/bytes");
 const constants_1 = require("@ethersproject/constants");
 exports.EIP712_SAFE_TX_TYPE = {
@@ -20,20 +19,7 @@ exports.EIP712_SAFE_TX_TYPE = {
     ]
 };
 const signHash = async (signer, hash, from) => {
-    const typedDataHash = (0, bytes_1.arrayify)(hash);
-    if (!(signer instanceof ethers_1.Wallet || signer instanceof ethers_1.Signer)) {
-        console.log("DEBUG: GNOSIS SAFE DEPLOYER signHash1");
-        const signature = await signer.request({
-            method: 'personal_sign',
-            params: [hash, from],
-        });
-        console.log(" DEBUG: GNOSIS SAFE DEPLOYER signature", signature);
-        return {
-            signer: from || "",
-            data: String(signature).replace(/1b$/, "1f").replace(/1c$/, "20")
-        };
-    }
-    console.log("DEBUG: GNOSIS SAFE DEPLOYER signHash2");
+    const typedDataHash = bytes_1.arrayify(hash);
     return {
         signer: await signer.getAddress(),
         data: (await signer.signMessage(typedDataHash)).replace(/1b$/, "1f").replace(/1c$/, "20")

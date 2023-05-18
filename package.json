@@ -48,11 +48,16 @@
     "hardhat": "^2.14.0"
   },
   "dependencies": {
+    "@safe-global/api-kit": "^1.1.0",
+    "@safe-global/protocol-kit": "^1.0.1",
+    "@safe-global/safe-core-sdk": "^3.3.3",
+    "@safe-global/safe-ethers-adapters": "^0.2.0-alpha.0",
+    "@safe-global/safe-ethers-lib": "^1.9.3",
     "@types/yargs": "^15.0.10",
     "argv": "^0.0.2",
     "axios": "^0.21.1",
     "dotenv": "^8.0.0",
-    "ethers": "^5.7.2",
+    "ethers": "^5.7.0",
     "solc": "0.7.6",
     "yargs": "^16.1.1"
   }
