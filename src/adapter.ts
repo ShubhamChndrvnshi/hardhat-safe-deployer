@@ -80,7 +80,7 @@ export class SafeProviderAdapter implements EthereumProvider {
                 chainId: this.chainId,
                 verifyingContract: this.safe,
             }, EIP712_SAFE_TX_TYPE, safeTx)
-            const from = this.accounts.length ? this.accounts[0]: constants.AddressZero
+            const from = this.accounts.length ? utils.getAddress(this.accounts[0]): constants.AddressZero
             const signature = await signHash(this.signer || this.wrapped, safeTxHash, from)
             await this.proposeTx(safeTxHash, safeTx, signature)
             this.submittedTxs.set(safeTxHash, {

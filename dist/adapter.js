@@ -68,7 +68,7 @@ class SafeProviderAdapter {
                 chainId: this.chainId,
                 verifyingContract: this.safe,
             }, execution_1.EIP712_SAFE_TX_TYPE, safeTx);
-            const from = this.accounts.length ? this.accounts[0] : ethers_1.constants.AddressZero;
+            const from = this.accounts.length ? ethers_1.utils.getAddress(this.accounts[0]) : ethers_1.constants.AddressZero;
             const signature = await execution_1.signHash(this.signer || this.wrapped, safeTxHash, from);
             await this.proposeTx(safeTxHash, safeTx, signature);
             this.submittedTxs.set(safeTxHash, {
