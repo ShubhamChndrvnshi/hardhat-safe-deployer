@@ -14,12 +14,12 @@ export class SafeProviderAdapter implements EthereumProvider {
     signer: Wallet| undefined
     submittedTxs = new Map<string, any>()
     wrapped: any
-    userAccounts: string[]
+    accounts: string[]
 
     constructor(wrapped: any, safe: string, chainId: number, serviceUrl: string, hre: HardhatRuntimeEnvironment, signer?: Wallet) {
         this.chainId = chainId;
         this.wrapped = wrapped
-        this.userAccounts = []
+        this.accounts = []
         this.safe = utils.getAddress(safe)
         this.serviceUrl = serviceUrl ?? "https://safe-transaction.rinkeby.gnosis.io"
         this.safeContract = new Contract(safe, this.safeInterface, this.signer || hre.ethers.provider)
@@ -55,7 +55,7 @@ export class SafeProviderAdapter implements EthereumProvider {
     }
 
     async request(args: RequestArguments): Promise<unknown> {
-        if(!this.signer && !this.userAccounts.length) this.userAccounts = await this.wrapped.send('eth_accounts')
+        if(!this.signer && !this.accounts.length) this.accounts = await this.wrapped.send('eth_accounts')
         if (args.method === 'eth_sendTransaction' && args.params && (args.params as any)[0].from?.toLowerCase() === this.safe.toLowerCase()) {
             const tx = (args.params as any)[0]
             let operation = 0
@@ -80,7 +80,7 @@ export class SafeProviderAdapter implements EthereumProvider {
                 chainId: this.chainId,
                 verifyingContract: this.safe,
             }, EIP712_SAFE_TX_TYPE, safeTx)
-            const from = this.userAccounts.length ? utils.getAddress(this.userAccounts[0]): constants.AddressZero
+            const from = this.accounts.length ? utils.getAddress(this.accounts[0]): constants.AddressZero
             const signature = await signHash(this.signer || this.wrapped, safeTxHash, from)
             await this.proposeTx(safeTxHash, safeTx, signature)
             this.submittedTxs.set(safeTxHash, {
@@ -120,9 +120,9 @@ export class SafeProviderAdapter implements EthereumProvider {
                 return resp
             }
         }
-        const result = await this.wrapped.request(args)
+        let result = await this.wrapped.request(args)
         if (args.method === 'eth_accounts') {
-            result.push(this.safe)
+            result = [this.safe, ...result]
         }
         return result
     }
@@ -172,7 +172,6 @@ export class SafeProviderAdapter implements EthereumProvider {
         return this.wrapped.eventNames()
     }
     async send(method: string, params: any): Promise<any> {
-        console.log("DEBUG: GNOSIS SAFE DEPLOYER send")
         return await this.request({ method, params })
     }
 
