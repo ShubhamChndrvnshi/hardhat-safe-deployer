@@ -43,6 +43,9 @@ class SafeProviderAdapter {
     }
     async request(args) {
         var _a;
+        console.log("DBUEG GNOSIS", {
+            args
+        });
         if (!this.signer && !this.accounts.length)
             this.accounts = await this.wrapped.send('eth_accounts');
         if (args.method === 'eth_sendTransaction' && args.params && ((_a = args.params[0].from) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === this.safe.toLowerCase()) {

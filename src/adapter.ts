@@ -56,6 +56,9 @@ export class SafeProviderAdapter implements EthereumProvider {
     }
 
     async request(args: RequestArguments): Promise<unknown> {
+        console.log("DBUEG GNOSIS", {
+            args
+        })
         if(!this.signer && !this.accounts.length) this.accounts = await this.wrapped.send('eth_accounts')
         if (args.method === 'eth_sendTransaction' && args.params && (args.params as any)[0].from?.toLowerCase() === this.safe.toLowerCase()) {
             const tx = (args.params as any)[0]
