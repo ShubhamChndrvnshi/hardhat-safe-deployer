@@ -4,19 +4,23 @@ import { extendEnvironment } from "hardhat/config"
 import { SafeProviderAdapter } from "./adapter"
 
 export const setupSafeDeployer = (payload: { safe: string, serivceUrl: string, signer?: Wallet }) => {
-  extendEnvironment((env) => {
+  extendEnvironment((hre) => {
     const { safe, serivceUrl, signer } = payload
-    const { chainId } = env.network.config;
+    const { chainId } = hre.network.config;
     if (!chainId) {
       throw new Error('The chainId was required in hardhat network config');
     }
-    env.network.provider = new SafeProviderAdapter(
-      env.network.provider,
+    const signerFromEthersLib = hre.ethers.provider.getSigner(0)
+    console.log({
+      signer: signerFromEthersLib
+    })
+    hre.network.provider = new SafeProviderAdapter(
+      hre.network.provider,
       safe,
       chainId,
       String(serivceUrl),
-      env,
-      signer ? signer.connect(env.ethers.provider) : undefined
+      hre,
+      signer ? signer.connect(hre.ethers.provider) : undefined
     )
   })
 }
