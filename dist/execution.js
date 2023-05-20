@@ -23,7 +23,7 @@ exports.EIP712_SAFE_TX_TYPE = {
 };
 const signHash = async (providerOrSignerWallet, hash, from) => {
     const typedDataHash = bytes_1.arrayify(hash);
-    if (providerOrSignerWallet instanceof ethers_1.Wallet) {
+    if ((providerOrSignerWallet instanceof ethers_1.Wallet) || (providerOrSignerWallet instanceof ethers_1.providers.JsonRpcSigner)) {
         return {
             signer: await providerOrSignerWallet.getAddress(),
             data: (await providerOrSignerWallet.signMessage(typedDataHash)).replace(/1b$/, "1f").replace(/1c$/, "20")

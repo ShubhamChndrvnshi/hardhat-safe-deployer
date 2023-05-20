@@ -1,6 +1,6 @@
 import { BigNumber } from "@ethersproject/bignumber";
 import { EthereumProvider } from "hardhat/types";
-import { Wallet } from "ethers";
+import { Wallet, providers } from "ethers";
 export declare const EIP712_SAFE_TX_TYPE: {
     SafeTx: {
         type: string;
@@ -25,7 +25,7 @@ export interface SafeSignature {
     signer: string;
     data: string;
 }
-export declare const signHash: (providerOrSignerWallet: EthereumProvider | Wallet, hash: string, from: string) => Promise<SafeSignature>;
+export declare const signHash: (providerOrSignerWallet: EthereumProvider | Wallet | providers.JsonRpcSigner, hash: string, from: string) => Promise<SafeSignature>;
 export declare const buildSafeTransaction: (template: {
     to: string;
     value?: BigNumber | number | string;
