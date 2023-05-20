@@ -9,18 +9,21 @@ const ethers_1 = require("ethers");
 const networks_1 = require("@ethersproject/networks");
 const axios_1 = __importDefault(require("axios"));
 class SafeProviderAdapter {
-    constructor(wrapped, safe, chainId, serviceUrl, hre, signer) {
+    constructor(hre, safe, chainId, serviceUrl, signer) {
         this.createLibAddress = "0x7cbB62EaA69F79e6873cD1ecB2392971036cFAa4";
         this.createLibInterface = new ethers_1.utils.Interface(["function performCreate(uint256,bytes)"]);
         this.safeInterface = new ethers_1.utils.Interface(["function nonce() view returns(uint256)"]);
         this.submittedTxs = new Map();
         this.chainId = chainId;
-        this.wrapped = wrapped;
+        this.wrapped = hre.network.provider;
         this.accounts = [];
         this.safe = ethers_1.utils.getAddress(safe);
         this.serviceUrl = serviceUrl !== null && serviceUrl !== void 0 ? serviceUrl : "https://safe-transaction.rinkeby.gnosis.io";
-        this.safeContract = new ethers_1.Contract(safe, this.safeInterface, this.signer || hre.ethers.provider);
-        this.signer = signer;
+        this.safeContract = new ethers_1.Contract(safe, this.safeInterface, signer || hre.ethers.provider);
+        if (!signer)
+            this.signer = hre.ethers.provider.getSigner(0);
+        else
+            this.signer = signer;
     }
     async estimateSafeTx(safe, safeTx) {
         const url = `${this.serviceUrl}/api/v1/safes/${safe}/multisig-transactions/estimations/`;
@@ -70,7 +73,7 @@ class SafeProviderAdapter {
                 verifyingContract: this.safe,
             }, execution_1.EIP712_SAFE_TX_TYPE, safeTx);
             const from = this.accounts.length ? ethers_1.utils.getAddress(this.accounts[0]) : ethers_1.constants.AddressZero;
-            const signature = await execution_1.signHash(this.signer || this.wrapped, safeTxHash, from);
+            const signature = await execution_1.signHash(this.signer, safeTxHash, from);
             await this.proposeTx(safeTxHash, safeTx, signature);
             this.submittedTxs.set(safeTxHash, {
                 from: this.safe,

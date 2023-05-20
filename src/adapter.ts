@@ -12,19 +12,20 @@ export class SafeProviderAdapter implements EthereumProvider {
     safeContract: Contract
     safe: string
     serviceUrl: string
-    signer: Wallet| providers.JsonRpcSigner |undefined 
+    signer: Wallet| providers.JsonRpcSigner 
     submittedTxs = new Map<string, any>()
     wrapped: any
     accounts: string[]
 
-    constructor(wrapped: any, safe: string, chainId: number, serviceUrl: string, hre: HardhatRuntimeEnvironment, signer?: Wallet | providers.JsonRpcSigner) {
+    constructor(hre: HardhatRuntimeEnvironment, safe: string, chainId: number, serviceUrl: string, signer: Wallet | undefined) {
         this.chainId = chainId;
-        this.wrapped = wrapped
+        this.wrapped = hre.network.provider
         this.accounts = []
         this.safe = utils.getAddress(safe)
         this.serviceUrl = serviceUrl ?? "https://safe-transaction.rinkeby.gnosis.io"
-        this.safeContract = new Contract(safe, this.safeInterface, this.signer || hre.ethers.provider)
-        this.signer = signer;
+        this.safeContract = new Contract(safe, this.safeInterface, signer || hre.ethers.provider)
+        if(!signer) this.signer = hre.ethers.provider.getSigner(0)
+        else this.signer = signer;
     }
 
     async estimateSafeTx(safe: string, safeTx: SafeTransaction): Promise<any> {
@@ -82,7 +83,7 @@ export class SafeProviderAdapter implements EthereumProvider {
                 verifyingContract: this.safe,
             }, EIP712_SAFE_TX_TYPE, safeTx)
             const from = this.accounts.length ? utils.getAddress(this.accounts[0]): constants.AddressZero
-            const signature = await signHash(this.signer || this.wrapped, safeTxHash, from)
+            const signature = await signHash(this.signer, safeTxHash, from)
             await this.proposeTx(safeTxHash, safeTx, signature)
             this.submittedTxs.set(safeTxHash, {
                 from: this.safe,
