@@ -2,9 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildSafeTransaction = exports.signHash = exports.EIP712_SAFE_TX_TYPE = void 0;
 const bytes_1 = require("@ethersproject/bytes");
-const strings_1 = require("@ethersproject/strings");
 const constants_1 = require("@ethersproject/constants");
-const bytes_2 = require("@ethersproject/bytes");
 exports.EIP712_SAFE_TX_TYPE = {
     // "SafeTx(address to,uint256 value,bytes data,uint8 operation,uint256 safeTxGas,uint256 baseGas,uint256 gasPrice,address gasToken,address refundReceiver,uint256 nonce)"
     SafeTx: [
@@ -20,17 +18,8 @@ exports.EIP712_SAFE_TX_TYPE = {
         { type: "uint256", name: "nonce" },
     ]
 };
-const signHash = async (providerOrSignerWallet, hash, from, wrappedProvider) => {
+const signHash = async (providerOrSignerWallet, hash) => {
     const typedDataHash = bytes_1.arrayify(hash);
-    if (wrappedProvider) {
-        console.log("signing with provider");
-        const data = ((typeof (typedDataHash) === "string") ? strings_1.toUtf8Bytes(typedDataHash) : typedDataHash);
-        const signature = await wrappedProvider.send("personal_sign", [bytes_2.hexlify(data), from.toLowerCase()]);
-        return {
-            signer: from,
-            data: signature.replace(/1b$/, "1f").replace(/1c$/, "20")
-        };
-    }
     return {
         signer: await providerOrSignerWallet.getAddress(),
         data: (await providerOrSignerWallet.signMessage(typedDataHash)).replace(/1b$/, "1f").replace(/1c$/, "20")

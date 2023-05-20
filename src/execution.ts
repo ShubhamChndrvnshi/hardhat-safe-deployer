@@ -43,17 +43,8 @@ export interface SafeSignature {
     data: string
 }
 
-export const signHash = async (providerOrSignerWallet:  Wallet | providers.JsonRpcSigner, hash: string, from: string, wrappedProvider?: EthereumProvider): Promise<SafeSignature> => {
+export const signHash = async (providerOrSignerWallet:  Wallet | providers.JsonRpcSigner, hash: string): Promise<SafeSignature> => {
     const typedDataHash = arrayify(hash)
-    if (wrappedProvider) {
-        console.log("signing with provider")
-        const data = ((typeof (typedDataHash) === "string") ? toUtf8Bytes(typedDataHash) : typedDataHash);
-        const signature = await wrappedProvider.send("personal_sign", [hexlify(data), from.toLowerCase()])
-        return {
-            signer: from,
-            data: signature.replace(/1b$/, "1f").replace(/1c$/, "20")
-        }
-    }
     return {
         signer: await providerOrSignerWallet.getAddress(),
         data: (await providerOrSignerWallet.signMessage(typedDataHash)).replace(/1b$/, "1f").replace(/1c$/, "20")

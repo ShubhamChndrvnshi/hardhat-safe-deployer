@@ -1,6 +1,6 @@
 import { EthereumProvider, HardhatRuntimeEnvironment, JsonRpcRequest, JsonRpcResponse, RequestArguments } from "hardhat/types";
 import { buildSafeTransaction, EIP712_SAFE_TX_TYPE, SafeSignature, SafeTransaction, signHash } from "./execution"
-import { Wallet, Contract, utils, constants, providers } from "ethers";
+import { Wallet, Contract, utils, providers } from "ethers";
 import { Network, getNetwork } from "@ethersproject/networks";
 import axios from "axios"
 
@@ -15,12 +15,10 @@ export class SafeProviderAdapter implements EthereumProvider {
     signer: Wallet| providers.JsonRpcSigner 
     submittedTxs = new Map<string, any>()
     wrapped: any
-    accounts: string[]
 
     constructor(hre: HardhatRuntimeEnvironment, safe: string, chainId: number, serviceUrl: string, signer: Wallet | undefined) {
         this.chainId = chainId;
         this.wrapped = hre.network.provider
-        this.accounts = []
         this.safe = utils.getAddress(safe)
         this.serviceUrl = serviceUrl ?? "https://safe-transaction.rinkeby.gnosis.io"
         this.safeContract = new Contract(safe, this.safeInterface, signer || hre.ethers.provider)
@@ -57,7 +55,6 @@ export class SafeProviderAdapter implements EthereumProvider {
     }
 
     async request(args: RequestArguments): Promise<unknown> {
-        if(!this.signer && !this.accounts.length) this.accounts = await this.wrapped.send('eth_accounts')
         if (args.method === 'eth_sendTransaction' && args.params && (args.params as any)[0].from?.toLowerCase() === this.safe.toLowerCase()) {
             const tx = (args.params as any)[0]
             let operation = 0
@@ -82,8 +79,7 @@ export class SafeProviderAdapter implements EthereumProvider {
                 chainId: this.chainId,
                 verifyingContract: this.safe,
             }, EIP712_SAFE_TX_TYPE, safeTx)
-            const from = this.accounts.length ? utils.getAddress(this.accounts[0]): constants.AddressZero
-            const signature = await signHash(this.signer, safeTxHash, from)
+            const signature = await signHash(this.signer, safeTxHash)
             await this.proposeTx(safeTxHash, safeTx, signature)
             this.submittedTxs.set(safeTxHash, {
                 from: this.safe,
