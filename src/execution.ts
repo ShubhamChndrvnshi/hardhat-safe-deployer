@@ -2,8 +2,6 @@ import { arrayify } from "@ethersproject/bytes";
 import { toUtf8Bytes } from "@ethersproject/strings";
 import { BigNumber } from "@ethersproject/bignumber";
 import { AddressZero } from "@ethersproject/constants";
-import { hexlify } from "@ethersproject/bytes";
-import { EthereumProvider } from "hardhat/types";
 import { Wallet, providers } from "ethers";
 
 export const EIP712_SAFE_TX_TYPE = {
