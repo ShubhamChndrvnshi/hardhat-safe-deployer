@@ -8,11 +8,7 @@ const adapter_1 = require("./adapter");
 const setupSafeDeployer = (payload) => {
     config_1.extendEnvironment((hre) => {
         const { safe, serivceUrl, signer } = payload;
-        const { chainId } = hre.network.config;
-        if (!chainId) {
-            throw new Error('The chainId was required in hardhat network config');
-        }
-        hre.network.provider = new adapter_1.SafeProviderAdapter(hre, safe, chainId, serivceUrl, signer ? signer.connect(hre.ethers.provider) : undefined);
+        hre.network.provider = new adapter_1.SafeProviderAdapter(hre, safe, serivceUrl, signer ? signer.connect(hre.ethers.provider) : undefined);
     });
 };
 exports.setupSafeDeployer = setupSafeDeployer;

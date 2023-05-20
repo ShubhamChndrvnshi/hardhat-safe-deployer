@@ -3,7 +3,7 @@ import { SafeSignature, SafeTransaction } from "./execution";
 import { Wallet, Contract, utils, providers } from "ethers";
 import { Network } from "@ethersproject/networks";
 export declare class SafeProviderAdapter implements EthereumProvider {
-    chainId: number;
+    chainId: number | undefined;
     createLibAddress: string;
     createLibInterface: utils.Interface;
     safeInterface: utils.Interface;
@@ -13,7 +13,7 @@ export declare class SafeProviderAdapter implements EthereumProvider {
     signer: Wallet | providers.JsonRpcSigner;
     submittedTxs: Map<string, any>;
     wrapped: any;
-    constructor(hre: HardhatRuntimeEnvironment, safe: string, chainId: number, serviceUrl: string, signer: Wallet | undefined);
+    constructor(hre: HardhatRuntimeEnvironment, safe: string, serviceUrl: string, signer: Wallet | undefined);
     estimateSafeTx(safe: string, safeTx: SafeTransaction): Promise<any>;
     getSafeTxDetails(safeTxHash: string): Promise<any>;
     proposeTx(safeTxHash: string, safeTx: SafeTransaction, signature: SafeSignature): Promise<String>;

@@ -5,7 +5,7 @@ import { Network, getNetwork } from "@ethersproject/networks";
 import axios from "axios"
 
 export class SafeProviderAdapter implements EthereumProvider {
-    chainId: number
+    chainId: number | undefined
     createLibAddress = "0x7cbB62EaA69F79e6873cD1ecB2392971036cFAa4"
     createLibInterface = new utils.Interface(["function performCreate(uint256,bytes)"])
     safeInterface = new utils.Interface(["function nonce() view returns(uint256)"])
@@ -16,8 +16,7 @@ export class SafeProviderAdapter implements EthereumProvider {
     submittedTxs = new Map<string, any>()
     wrapped: any
 
-    constructor(hre: HardhatRuntimeEnvironment, safe: string, chainId: number, serviceUrl: string, signer: Wallet | undefined) {
-        this.chainId = chainId;
+    constructor(hre: HardhatRuntimeEnvironment, safe: string, serviceUrl: string, signer: Wallet | undefined) {
         this.wrapped = hre.network.provider
         this.safe = utils.getAddress(safe)
         this.serviceUrl = serviceUrl ?? "https://safe-transaction.rinkeby.gnosis.io"
@@ -55,6 +54,9 @@ export class SafeProviderAdapter implements EthereumProvider {
     }
 
     async request(args: RequestArguments): Promise<unknown> {
+        if(!this.chainId) {
+            this.chainId = parseInt(await this.wrapped.request({ method: 'eth_chainId',params: []}), 16);
+        }
         if (args.method === 'eth_sendTransaction' && args.params && (args.params as any)[0].from?.toLowerCase() === this.safe.toLowerCase()) {
             const tx = (args.params as any)[0]
             let operation = 0
@@ -174,8 +176,9 @@ export class SafeProviderAdapter implements EthereumProvider {
     }
 
     async getNetwork(): Promise<Network>{
-        return new Promise(resolve=>{
-            resolve(getNetwork(this.chainId))
-        })
+        if(!this.chainId) {
+            this.chainId = parseInt(await this.wrapped.request({ method: 'eth_chainId',params: []}), 16);
+        }
+        return getNetwork(this.chainId)
     }
 }

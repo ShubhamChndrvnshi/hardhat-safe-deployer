@@ -9,12 +9,11 @@ const ethers_1 = require("ethers");
 const networks_1 = require("@ethersproject/networks");
 const axios_1 = __importDefault(require("axios"));
 class SafeProviderAdapter {
-    constructor(hre, safe, chainId, serviceUrl, signer) {
+    constructor(hre, safe, serviceUrl, signer) {
         this.createLibAddress = "0x7cbB62EaA69F79e6873cD1ecB2392971036cFAa4";
         this.createLibInterface = new ethers_1.utils.Interface(["function performCreate(uint256,bytes)"]);
         this.safeInterface = new ethers_1.utils.Interface(["function nonce() view returns(uint256)"]);
         this.submittedTxs = new Map();
-        this.chainId = chainId;
         this.wrapped = hre.network.provider;
         this.safe = ethers_1.utils.getAddress(safe);
         this.serviceUrl = serviceUrl !== null && serviceUrl !== void 0 ? serviceUrl : "https://safe-transaction.rinkeby.gnosis.io";
@@ -45,6 +44,9 @@ class SafeProviderAdapter {
     }
     async request(args) {
         var _a;
+        if (!this.chainId) {
+            this.chainId = parseInt(await this.wrapped.request({ method: 'eth_chainId', params: [] }), 16);
+        }
         if (args.method === 'eth_sendTransaction' && args.params && ((_a = args.params[0].from) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === this.safe.toLowerCase()) {
             const tx = args.params[0];
             let operation = 0;
@@ -167,9 +169,10 @@ class SafeProviderAdapter {
         return await this.request({ method, params });
     }
     async getNetwork() {
-        return new Promise(resolve => {
-            resolve(networks_1.getNetwork(this.chainId));
-        });
+        if (!this.chainId) {
+            this.chainId = parseInt(await this.wrapped.request({ method: 'eth_chainId', params: [] }), 16);
+        }
+        return networks_1.getNetwork(this.chainId);
     }
 }
 exports.SafeProviderAdapter = SafeProviderAdapter;

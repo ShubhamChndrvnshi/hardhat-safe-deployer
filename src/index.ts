@@ -6,14 +6,9 @@ import { SafeProviderAdapter } from "./adapter"
 export const setupSafeDeployer = (payload: { safe: string, serivceUrl: string, signer?: Wallet }) => {
   extendEnvironment((hre) => {
     const { safe, serivceUrl, signer } = payload
-    const { chainId } = hre.network.config;
-    if (!chainId) {
-      throw new Error('The chainId was required in hardhat network config');
-    }
     hre.network.provider = new SafeProviderAdapter(
       hre,
       safe,
-      chainId,
       serivceUrl,
       signer ? signer.connect(hre.ethers.provider) : undefined
     )
