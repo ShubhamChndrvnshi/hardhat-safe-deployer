@@ -25,7 +25,7 @@ export interface SafeSignature {
     signer: string;
     data: string;
 }
-export declare const signHash: (providerOrSignerWallet: EthereumProvider | Wallet | providers.JsonRpcSigner, hash: string, from: string) => Promise<SafeSignature>;
+export declare const signHash: (providerOrSignerWallet: Wallet | providers.JsonRpcSigner, hash: string, from: string, wrappedProvider?: EthereumProvider | undefined) => Promise<SafeSignature>;
 export declare const buildSafeTransaction: (template: {
     to: string;
     value?: BigNumber | number | string;

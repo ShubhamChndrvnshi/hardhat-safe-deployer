@@ -43,20 +43,20 @@ export interface SafeSignature {
     data: string
 }
 
-export const signHash = async (providerOrSignerWallet: EthereumProvider | Wallet | providers.JsonRpcSigner , hash: string, from: string): Promise<SafeSignature> => {
+export const signHash = async (providerOrSignerWallet:  Wallet | providers.JsonRpcSigner, hash: string, from: string, wrappedProvider?: EthereumProvider): Promise<SafeSignature> => {
     const typedDataHash = arrayify(hash)
-    if( (providerOrSignerWallet instanceof Wallet) || (providerOrSignerWallet instanceof providers.JsonRpcSigner)){
+    if (wrappedProvider) {
+        console.log("signing with provider")
+        const data = ((typeof (typedDataHash) === "string") ? toUtf8Bytes(typedDataHash) : typedDataHash);
+        const signature = await wrappedProvider.send("personal_sign", [hexlify(data), from.toLowerCase()])
         return {
-            signer: await providerOrSignerWallet.getAddress(),
-            data: (await providerOrSignerWallet.signMessage(typedDataHash)).replace(/1b$/, "1f").replace(/1c$/, "20")
+            signer: from,
+            data: signature.replace(/1b$/, "1f").replace(/1c$/, "20")
         }
     }
-    console.log("signing with provider")
-    const data = ((typeof(typedDataHash) === "string") ? toUtf8Bytes(typedDataHash): typedDataHash);
-    const signature = await providerOrSignerWallet.send("personal_sign", [ hexlify(data), from.toLowerCase() ])
     return {
-        signer: from ,
-        data: signature.replace(/1b$/, "1f").replace(/1c$/, "20")
+        signer: await providerOrSignerWallet.getAddress(),
+        data: (await providerOrSignerWallet.signMessage(typedDataHash)).replace(/1b$/, "1f").replace(/1c$/, "20")
     }
 }
 

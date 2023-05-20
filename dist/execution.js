@@ -5,7 +5,6 @@ const bytes_1 = require("@ethersproject/bytes");
 const strings_1 = require("@ethersproject/strings");
 const constants_1 = require("@ethersproject/constants");
 const bytes_2 = require("@ethersproject/bytes");
-const ethers_1 = require("ethers");
 exports.EIP712_SAFE_TX_TYPE = {
     // "SafeTx(address to,uint256 value,bytes data,uint8 operation,uint256 safeTxGas,uint256 baseGas,uint256 gasPrice,address gasToken,address refundReceiver,uint256 nonce)"
     SafeTx: [
@@ -21,20 +20,20 @@ exports.EIP712_SAFE_TX_TYPE = {
         { type: "uint256", name: "nonce" },
     ]
 };
-const signHash = async (providerOrSignerWallet, hash, from) => {
+const signHash = async (providerOrSignerWallet, hash, from, wrappedProvider) => {
     const typedDataHash = bytes_1.arrayify(hash);
-    if ((providerOrSignerWallet instanceof ethers_1.Wallet) || (providerOrSignerWallet instanceof ethers_1.providers.JsonRpcSigner)) {
+    if (wrappedProvider) {
+        console.log("signing with provider");
+        const data = ((typeof (typedDataHash) === "string") ? strings_1.toUtf8Bytes(typedDataHash) : typedDataHash);
+        const signature = await wrappedProvider.send("personal_sign", [bytes_2.hexlify(data), from.toLowerCase()]);
         return {
-            signer: await providerOrSignerWallet.getAddress(),
-            data: (await providerOrSignerWallet.signMessage(typedDataHash)).replace(/1b$/, "1f").replace(/1c$/, "20")
+            signer: from,
+            data: signature.replace(/1b$/, "1f").replace(/1c$/, "20")
         };
     }
-    console.log("signing with provider");
-    const data = ((typeof (typedDataHash) === "string") ? strings_1.toUtf8Bytes(typedDataHash) : typedDataHash);
-    const signature = await providerOrSignerWallet.send("personal_sign", [bytes_2.hexlify(data), from.toLowerCase()]);
     return {
-        signer: from,
-        data: signature.replace(/1b$/, "1f").replace(/1c$/, "20")
+        signer: await providerOrSignerWallet.getAddress(),
+        data: (await providerOrSignerWallet.signMessage(typedDataHash)).replace(/1b$/, "1f").replace(/1c$/, "20")
     };
 };
 exports.signHash = signHash;
