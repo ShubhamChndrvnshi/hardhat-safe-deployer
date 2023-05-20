@@ -1,6 +1,6 @@
 import { EthereumProvider, HardhatRuntimeEnvironment, JsonRpcRequest, JsonRpcResponse, RequestArguments } from "hardhat/types";
 import { SafeSignature, SafeTransaction } from "./execution";
-import { Wallet, Contract, utils } from "ethers";
+import { Wallet, Contract, utils, providers } from "ethers";
 import { Network } from "@ethersproject/networks";
 export declare class SafeProviderAdapter implements EthereumProvider {
     chainId: number;
@@ -10,11 +10,11 @@ export declare class SafeProviderAdapter implements EthereumProvider {
     safeContract: Contract;
     safe: string;
     serviceUrl: string;
-    signer: Wallet | undefined;
+    signer: Wallet | providers.JsonRpcSigner | undefined;
     submittedTxs: Map<string, any>;
     wrapped: any;
     accounts: string[];
-    constructor(wrapped: any, safe: string, chainId: number, serviceUrl: string, hre: HardhatRuntimeEnvironment, signer?: Wallet);
+    constructor(wrapped: any, safe: string, chainId: number, serviceUrl: string, hre: HardhatRuntimeEnvironment, signer?: Wallet | providers.JsonRpcSigner);
     estimateSafeTx(safe: string, safeTx: SafeTransaction): Promise<any>;
     getSafeTxDetails(safeTxHash: string): Promise<any>;
     proposeTx(safeTxHash: string, safeTx: SafeTransaction, signature: SafeSignature): Promise<String>;

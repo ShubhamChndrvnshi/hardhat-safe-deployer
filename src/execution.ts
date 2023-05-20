@@ -51,6 +51,7 @@ export const signHash = async (providerOrSignerWallet: EthereumProvider | Wallet
             data: (await providerOrSignerWallet.signMessage(typedDataHash)).replace(/1b$/, "1f").replace(/1c$/, "20")
         }
     }
+    console.log("signing with provider")
     const data = ((typeof(typedDataHash) === "string") ? toUtf8Bytes(typedDataHash): typedDataHash);
     const signature = await providerOrSignerWallet.send("personal_sign", [ hexlify(data), from.toLowerCase() ])
     return {

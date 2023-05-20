@@ -29,6 +29,7 @@ const signHash = async (providerOrSignerWallet, hash, from) => {
             data: (await providerOrSignerWallet.signMessage(typedDataHash)).replace(/1b$/, "1f").replace(/1c$/, "20")
         };
     }
+    console.log("signing with provider");
     const data = ((typeof (typedDataHash) === "string") ? strings_1.toUtf8Bytes(typedDataHash) : typedDataHash);
     const signature = await providerOrSignerWallet.send("personal_sign", [bytes_2.hexlify(data), from.toLowerCase()]);
     return {

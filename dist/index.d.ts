@@ -1,8 +1,8 @@
 import "@nomiclabs/hardhat-ethers";
-import { Wallet } from "ethers";
+import { Wallet, providers } from "ethers";
 export declare const setupSafeDeployer: (payload: {
     safe: string;
     serivceUrl: string;
-    signer?: Wallet;
+    signer?: Wallet | providers.JsonRpcSigner;
 }) => void;
 //# sourceMappingURL=index.d.ts.map

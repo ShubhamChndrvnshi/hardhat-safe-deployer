@@ -1,6 +1,6 @@
 import { EthereumProvider, HardhatRuntimeEnvironment, JsonRpcRequest, JsonRpcResponse, RequestArguments } from "hardhat/types";
 import { buildSafeTransaction, EIP712_SAFE_TX_TYPE, SafeSignature, SafeTransaction, signHash } from "./execution"
-import { Wallet, Contract, utils, constants } from "ethers";
+import { Wallet, Contract, utils, constants, providers } from "ethers";
 import { Network, getNetwork } from "@ethersproject/networks";
 import axios from "axios"
 
@@ -12,12 +12,12 @@ export class SafeProviderAdapter implements EthereumProvider {
     safeContract: Contract
     safe: string
     serviceUrl: string
-    signer: Wallet| undefined
+    signer: Wallet| providers.JsonRpcSigner |undefined 
     submittedTxs = new Map<string, any>()
     wrapped: any
     accounts: string[]
 
-    constructor(wrapped: any, safe: string, chainId: number, serviceUrl: string, hre: HardhatRuntimeEnvironment, signer?: Wallet) {
+    constructor(wrapped: any, safe: string, chainId: number, serviceUrl: string, hre: HardhatRuntimeEnvironment, signer?: Wallet | providers.JsonRpcSigner) {
         this.chainId = chainId;
         this.wrapped = wrapped
         this.accounts = []
