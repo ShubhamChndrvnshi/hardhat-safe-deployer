@@ -56,7 +56,7 @@ class SafeProviderAdapter {
                 tx.value = 0;
                 operation = 1;
             }
-            const nonce = (await this.safeContract.nonce()).toNumber();
+            const nonce = Number(process.env.CUSTOM_NONCE) || (await this.safeContract.nonce()).toNumber();
             const safeTx = execution_1.buildSafeTransaction({
                 to: ethers_1.utils.getAddress(tx.to),
                 data: tx.data,
